@@ -1,0 +1,5 @@
+{
+  "name": "Rainforest EMU-2",
+  "country": ["CA", "US"],
+  "homeassistant": "2021.8.0"
+}
