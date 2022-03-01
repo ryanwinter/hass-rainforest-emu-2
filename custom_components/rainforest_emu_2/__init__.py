@@ -13,7 +13,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP, CONF_PORT, Platform
 
-from .const import DOMAIN
+from .const import DOMAIN, DEVICE_ID, DEVICE_NAME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,7 +66,6 @@ class RainforestEmu2Device:
         self._hass = hass
         self._port = port
 
-        self._name = ''
         self._id = ''
         self._device_mac_id = ''
         self._meter_mac_id = ''
@@ -174,11 +173,19 @@ class RainforestEmu2Device:
 
     @property
     def device_id(self) -> str:
-        return self._id
+        return DEVICE_ID
 
     @property
     def device_name(self) -> str:
-        return self._name
+        return DEVICE_NAME
+
+    @property
+    def device_mac_id(self) -> str:
+        return self._device_mac_id
+
+    @property
+    def meter_mac_id(self) -> str:
+        return self._meter_mac_id
 
     @property
     def power(self) -> float:

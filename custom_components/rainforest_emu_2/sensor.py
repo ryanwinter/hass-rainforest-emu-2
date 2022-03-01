@@ -3,12 +3,16 @@ from __future__ import annotations
 
 from homeassistant.core import callback
 from homeassistant.components.sensor import SensorEntity
+from homeassistant.const import ATTR_IDENTIFIERS, ATTR_NAME, ATTR_MANUFACTURER, ATTR_MODEL
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import DOMAIN
+from .const import DOMAIN, DEVICE_ID, DEVICE_NAME
 
-ATTR_MANUFACTURER="Rainforest"
-ATTR_MODEL="EMU-2"
+DEVICE_INFO_MANUFACTURER="Rainforest"
+DEVICE_INFO_MODEL="EMU-2"
+
+ATTR_DEVICE_MAC_ID="Device MAC"
+ATTR_METER_MAC_ID="Meter MAC"
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     device = hass.data[DOMAIN][config_entry.entry_id]
@@ -30,12 +34,14 @@ class DemandSensor(SensorEntity):
 
     @property
     def device_info(self) -> DeviceInfo:
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._device.device_id)},
-            name=self._device.device_name,
-            manufacturer=ATTR_MANUFACTURER,
-            model=ATTR_MODEL,
-        )    
+        return {
+            ATTR_IDENTIFIERS: {(DOMAIN, self._device.device_id)},
+            ATTR_NAME: DEVICE_NAME,
+            ATTR_MANUFACTURER: DEVICE_INFO_MANUFACTURER,
+            ATTR_MODEL: DEVICE_INFO_MODEL,
+            ATTR_DEVICE_MAC_ID: "help",#self._device.device_mac_id,
+            ATTR_METER_MAC_ID: self._device.meter_mac_id
+        }
 
     @property
     def available(self) -> bool:
