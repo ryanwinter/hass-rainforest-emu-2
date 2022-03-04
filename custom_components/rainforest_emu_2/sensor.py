@@ -11,8 +11,10 @@ from homeassistant.components.sensor import (
 from homeassistant.const import (
     ATTR_IDENTIFIERS, 
     ATTR_NAME, 
-    ATTR_MANUFACTURER, 
-    ATTR_MODEL,     
+    ATTR_MANUFACTURER,
+    ATTR_MODEL,
+    ATTR_HW_VERSION,
+    ATTR_SW_VERSION,
     ENERGY_KILO_WATT_HOUR
 )
 from homeassistant.helpers.entity import DeviceInfo
@@ -48,14 +50,15 @@ class Emu2PowerSensor(SensorEntity):
         return {
             ATTR_IDENTIFIERS: {(DOMAIN, self._device.device_id)},
             ATTR_NAME: DEVICE_NAME,
-            ATTR_MANUFACTURER: DEVICE_INFO_MANUFACTURER,
-            ATTR_MODEL: DEVICE_INFO_MODEL,
+            ATTR_MANUFACTURER: self._device.device_manufacturer,
+            ATTR_MODEL: self._device.device_model,
+            ATTR_HW_VERSION: self._device.device_hw_version,
+            ATTR_SW_VERSION: self._device.device_sw_version
         }
 
     @property
     def available(self) -> bool:
-#        return self._device.connected
-        return True
+        return self._device.connected
 
     @property
     def state(self):

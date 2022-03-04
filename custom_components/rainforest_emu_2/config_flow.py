@@ -11,10 +11,18 @@ from homeassistant import config_entries
 from homeassistant.components import usb
 from homeassistant.const import (
     CONF_PORT,
-    CONF_DEVICE_ID
+    CONF_DEVICE_ID,
+    ATTR_SW_VERSION,
+    ATTR_HW_VERSION,
+    ATTR_MANUFACTURER,
+    ATTR_MODEL
 )
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    ATTR_DEVICE_PATH,
+    ATTR_DEVICE_MAC_ID
+)
 from .emu2 import Emu2
 from .emu2_entities import (
     DeviceInfo
@@ -55,17 +63,14 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
                 usb.get_serial_by_id, port.device
             )
 
-            device_unique_id = await self.get_device_id(device_path)
-            if device_unique_id is not None:
-                await self.async_set_unique_id(device_unique_id)
+            device_properties = await self.get_device_id(device_path)
+            if device_properties is not None:
+                await self.async_set_unique_id(device_properties[ATTR_DEVICE_MAC_ID])
                 self._abort_if_unique_id_configured()
 
                 return self.async_create_entry(
                     title = device_path,
-                    data = {
-                        CONF_PORT: device_path,
-                        CONF_DEVICE_ID: device_unique_id
-                    },
+                    data = device_properties
                 )
 
             errors[CONF_DEVICE_PATH] = "device not detected"
@@ -94,7 +99,7 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
         schema = vol.Schema({vol.Required(CONF_DEVICE_PATH): str})
         return self.async_show_form(step_id = "manual", data_schema=schema)   
 
-    async def get_device_id(self, device_path: str) -> str:
+    async def get_device_id(self, device_path: str) -> dict[str, str]:
         """Probe the the device for the device mac id."""
         emu2 = Emu2(device_path)
         
@@ -110,6 +115,7 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
 
             _LOGGER.debug("Connected, waiting for response")
             await asyncio.sleep(5)
+            
             response = emu2.get_data(DeviceInfo)
 
         # End the monitoring loop
@@ -118,4 +124,11 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
         if response is None:
             return None
 
-        return response.device_mac
+        return {
+            ATTR_DEVICE_PATH: device_path,
+            ATTR_DEVICE_MAC_ID: response.device_mac,
+            ATTR_SW_VERSION: response.fw_version,
+            ATTR_HW_VERSION: response.hw_version,
+            ATTR_MANUFACTURER: response.manufacturer,
+            ATTR_MODEL: response.model_id
+        }

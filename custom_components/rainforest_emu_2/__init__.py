@@ -7,9 +7,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.const import (
     Platform,
-    EVENT_HOMEASSISTANT_STOP, 
-    CONF_PORT,
-    CONF_DEVICE_ID
+    EVENT_HOMEASSISTANT_STOP,
+    ATTR_MANUFACTURER,
+    ATTR_MODEL,
+    ATTR_HW_VERSION,
+    ATTR_SW_VERSION
 )
 
 from .emu2 import Emu2
@@ -18,8 +20,10 @@ from .emu2_entities import (
 )
 from .const import (
     DOMAIN, 
-    DEVICE_ID, 
+    DEVICE_ID,
     DEVICE_NAME,
+    ATTR_DEVICE_PATH,
+    ATTR_DEVICE_MAC_ID
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,10 +32,10 @@ PLATFORMS: list[str] = [Platform.SENSOR]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Rainforest EMU-2 from a config entry."""
-    device_path = entry.data[CONF_PORT]
-    device_id = entry.data[CONF_DEVICE_ID]
+#    device_path = entry.data[ATTR_DEVICE_PATH]
+#    device_id = entry.data[ATTR_DEVICE_MAC_ID]
 
-    emu2 = RainforestEmu2Device(hass, device_path, device_id)
+    emu2 = RainforestEmu2Device(hass, entry.data)#device_path, device_id)
 
     async def async_shutdown(event):
         # Handle shutdown
@@ -61,17 +65,15 @@ class RainforestEmu2Device:
     def __init__(
         self,
         hass : HomeAssistant,
-        device_path,
-        device_id,
+        properties
     ):
         self._hass = hass
-        self._device_path = device_path
-        self._device_id = device_id
-
-        self._power = 0.0
+        self._properties = properties
         self._callbacks = set()
 
-        self._emu = Emu2(device_path)
+        self._power = 0.0
+
+        self._emu = Emu2(properties[ATTR_DEVICE_PATH])
         self._emu.register_callback(self.process_update)
 
         self._serial_loop_task = self._hass.loop.create_task(
@@ -100,11 +102,27 @@ class RainforestEmu2Device:
 
     @property
     def device_id(self) -> str:
-        return f"{DEVICE_ID}_{self._device_id}"
+        return f"{DEVICE_ID}_{self._properties[ATTR_DEVICE_MAC_ID]}"
 
     @property
     def device_name(self) -> str:
         return DEVICE_NAME
+
+    @property
+    def device_manufacturer(self) -> str:
+        return self._properties[ATTR_MANUFACTURER]
+
+    @property
+    def device_model(self) -> str:
+        return self._properties[ATTR_MODEL]
+
+    @property
+    def device_sw_version(self) -> str:
+        return self._properties[ATTR_SW_VERSION]
+
+    @property
+    def device_hw_version(self) -> str:
+        return self._properties[ATTR_HW_VERSION]
 
     @property
     def power(self) -> float:
@@ -112,4 +130,4 @@ class RainforestEmu2Device:
 
     @property
     def connected(self) -> bool:
-        self._emu.connected
+        return self._emu.connected
