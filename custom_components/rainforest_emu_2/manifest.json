@@ -3,8 +3,9 @@
   "name": "Rainforest EMU-2",
   "documentation": "https://github.com/ryanwinter/hass-rainforest-emu-2/blob/main/custom_components/rainforest-emu-2/readme.md",
   "dependencies": ["usb"],
-  "codeowners": [ "@ryanwinter" ],
-  "requirements": [],
+  "codeowners": ["@ryanwinter"],
+  "requirements": [
+  ],
   "iot_class": "local_push",
   "version": "1.0.0",
   "config_flow": true,
