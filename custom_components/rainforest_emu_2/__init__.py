@@ -16,6 +16,7 @@ from homeassistant.const import (
 
 from .emu2 import Emu2
 from .emu2_entities import (
+    CurrentSummationDelivered,
     InstantaneousDemand
 )
 from .const import (
@@ -32,10 +33,7 @@ PLATFORMS: list[str] = [Platform.SENSOR]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Rainforest EMU-2 from a config entry."""
-#    device_path = entry.data[ATTR_DEVICE_PATH]
-#    device_id = entry.data[ATTR_DEVICE_MAC_ID]
-
-    emu2 = RainforestEmu2Device(hass, entry.data)#device_path, device_id)
+    emu2 = RainforestEmu2Device(hass, entry.data)
 
     async def async_shutdown(event):
         # Handle shutdown
@@ -72,6 +70,7 @@ class RainforestEmu2Device:
         self._callbacks = set()
 
         self._power = 0.0
+        self._summation_delivered = 0.0
 
         self._emu = Emu2(properties[ATTR_DEVICE_PATH])
         self._emu.register_callback(self.process_update)
@@ -96,6 +95,8 @@ class RainforestEmu2Device:
     def process_update(self, type, response) -> None:
         if type == 'InstantaneousDemand':
             self._power = self._emu.get_data(InstantaneousDemand).reading
+        elif type == 'CurrentSummationDelivered':
+            self._summation_delivered = self._emu.get_data(CurrentSummationDelivered).summation_delivered
 
         for callback in self._callbacks:
             callback()            

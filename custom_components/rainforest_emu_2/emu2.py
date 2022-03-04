@@ -36,8 +36,9 @@ class Emu2:
 
     # Exit the read loop
     def stop_serial(self) -> None:
-        self._connected = False
         self._serial_loop_exit = True
+        self._connected = False
+        self._writer.close()
 
     async def connect(self) -> bool:
         if self._connected == True:
@@ -46,7 +47,7 @@ class Emu2:
         try:
             self._reader, self._writer = await serial_asyncio.open_serial_connection(
                 url = self._device,
-                baudrate = 115200,
+                baudrate = 115200
             )
         except SerialException as ex:
             LOGGER.error(ex)
@@ -69,8 +70,8 @@ class Emu2:
             xml_str = ''
             while True:
                 if self._serial_loop_exit == True:
-                    return     
-            
+                    return
+
                 try:
                     line = await self._reader.readline()
                     line = line.decode("utf-8").strip()
