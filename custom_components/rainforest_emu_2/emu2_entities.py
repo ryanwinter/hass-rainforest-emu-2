@@ -131,7 +131,7 @@ class TimeCluster(Entity):
 class MessageCluster(Entity):
     def _parse(self):
         self.meter_mac = self.find_text("MeterMacId")
-        self.timestamp = self.find_text("TimeStamp")
+        self.timestamp = self.find_hex("TimeStamp")
         self.id = self.find_text("Id")
         self.text = self.find_text("Text")
         self.confirmation_required = self.find_text("ConfirmationRequired")
@@ -146,7 +146,7 @@ class MessageCluster(Entity):
 class PriceCluster(Entity):
     def _parse(self):
         self.meter_mac = self.find_text("MeterMacId")
-        self.timestamp = self.find_text("TimeStamp")
+        self.timestamp = self.find_hex("TimeStamp")
         self.price = self.find_text("Price")
         self.currency = self.find_text("Currency")      # ISO-4217
         self.trailing_digits = self.find_text("TrailingDigits")
@@ -162,7 +162,7 @@ class PriceCluster(Entity):
 class InstantaneousDemand(Entity):
     def _parse(self):
         self.meter_mac = self.find_text("MeterMacId")
-        self.timestamp = self.find_text("TimeStamp")
+        self.timestamp = self.find_hex("TimeStamp")
         self.demand = self.find_hex("Demand")
         self.multiplier = self.find_hex("Multiplier")
         self.divisor = self.find_hex("Divisor")
@@ -183,7 +183,7 @@ class InstantaneousDemand(Entity):
 class CurrentSummationDelivered(Entity):
     def _parse(self):
         self.meter_mac = self.find_text("MeterMacId")
-        self.timestamp = self.find_text("TimeStamp")
+        self.timestamp = self.find_hex("TimeStamp")
         self.summation_delivered = self.find_hex("SummationDelivered")
         self.summation_received = self.find_hex("SummationReceived")
         self.multiplier = self.find_hex("Multiplier")
@@ -194,22 +194,24 @@ class CurrentSummationDelivered(Entity):
 
         # Compute actual reading (protecting from divide-by-zero)
         if self.divisor != 0:
-            self.reading = self.summation_delivered * self.multiplier / float(self.divisor)
+            self.delivered = self.summation_delivered * self.multiplier / float(self.divisor)
+            self.received = self.summation_received * self.multiplier / float(self.divisor)
         else:
-            self.reading = 0
+            self.delivered = 0
+            self.received = 0
 
 
 class CurrentPeriodUsage(Entity):
     def _parse(self):
         self.meter_mac = self.find_text("MeterMacId")
-        self.timestamp = self.find_text("TimeStamp")
+        self.timestamp = self.find_hex("TimeStamp")
         self.current_usage = self.find_hex("CurrentUsage")
         self.multiplier = self.find_hex("Multiplier")
         self.divisor = self.find_hex("Divisor")
         self.digits_right = self.find_hex("DigitsRight")
         self.digits_left = self.find_hex("DigitsLeft")
         self.suppress_leading_zero = self.find_text("SuppressLeadingZero")
-        self.start_date = self.find_text("StartDate")
+        self.start_date = self.find_hex("StartDate")
 
         # Compute actual reading (protecting from divide-by-zero)
         if self.divisor != 0:
@@ -227,8 +229,8 @@ class LastPeriodUsage(Entity):
         self.digits_right = self.find_hex("DigitsRight")
         self.digits_left = self.find_hex("DigitsLeft")
         self.suppress_leading_zero = self.find_text("SuppressLeadingZero")
-        self.start_date = self.find_text("StartDate")
-        self.end_date = self.find_text("EndDate")
+        self.start_date = self.find_hex("StartDate")
+        self.end_date = self.find_hex("EndDate")
 
 
 # TODO: IntervalData may appear more than once

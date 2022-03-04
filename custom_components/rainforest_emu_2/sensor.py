@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from homeassistant.core import callback
-from homeassistant.util import dt
 from homeassistant.components.sensor import (
     SensorEntity, 
     SensorStateClass, 
@@ -15,36 +14,30 @@ from homeassistant.const import (
     ATTR_MODEL,
     ATTR_HW_VERSION,
     ATTR_SW_VERSION,
-    ENERGY_KILO_WATT_HOUR
+    ENERGY_KILO_WATT_HOUR,
+    POWER_KILO_WATT
 )
-from homeassistant.helpers.entity import DeviceInfo
 
 from .const import DOMAIN, DEVICE_NAME
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     device = hass.data[DOMAIN][config_entry.entry_id]
 
-    entities = []
-    entities.append(Emu2PowerSensor(device))
-    entities.append(Emu2SummationDeliveredSensor(device))
+    entities = [
+        Emu2ActivePowerSensor(device),
+        Emu2EnergyCurrentUsageSensor(device)
+    ]
     async_add_entities(entities)
 
-class Emu2PowerSensor(SensorEntity):
-    should_poll=False
-    
-    def __init__(self, device):
+class SensorEntityBase(SensorEntity):
+    should_poll = False
+
+    def __init__(self, device, observe):
         self._device = device
-
-        self._attr_unique_id = f"{self._device.device_id}_power"
-        self._attr_name = f"{self._device.device_name} Power"
-
-        self._attr_device_class = SensorDeviceClass.ENERGY
-        self._attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
-        self._attr_state_class = SensorStateClass.MEASUREMENT
-        self._attr_last_reset = dt.utc_from_timestamp(0)
+        self._observe = observe
 
     @property
-    def device_info(self) -> DeviceInfo:
+    def device_info(self):
         return {
             ATTR_IDENTIFIERS: {(DOMAIN, self._device.device_id)},
             ATTR_NAME: DEVICE_NAME,
@@ -58,46 +51,47 @@ class Emu2PowerSensor(SensorEntity):
     def available(self) -> bool:
         return self._device.connected
 
-    @property
-    def state(self):
-        return self._device.power
-
     async def async_added_to_hass(self):
-        self._device.register_callback(self.async_write_ha_state)
+        self._device.register_callback(self._observe, self.async_write_ha_state)
 
     async def async_will_remove_from_hass(self):
-        self._device.remove_callback(self.async_write_ha_state)    
+        self._device.remove_callback(self._observe, self.async_write_ha_state)
 
-class Emu2SummationDeliveredSensor(SensorEntity):
-    should_poll=False
-    
+class Emu2ActivePowerSensor(SensorEntityBase):
     def __init__(self, device):
-        self._device = device
+        super().__init__(device, 'InstantaneousDemand')
 
         self._attr_unique_id = f"{self._device.device_id}_power"
         self._attr_name = f"{self._device.device_name} Power"
 
-        self._attr_device_class = SensorDeviceClass.ENERGY
-        self._attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
+        self._attr_device_class = SensorDeviceClass.POWER
         self._attr_state_class = SensorStateClass.MEASUREMENT
-        self._attr_last_reset = dt.utc_from_timestamp(0)
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        return {
-            ATTR_IDENTIFIERS: {(DOMAIN, self._device.device_id)},
-        }
-
-    @property
-    def available(self) -> bool:
-        return self._device.connected
+        self._attr_native_unit_of_measurement = POWER_KILO_WATT
 
     @property
     def state(self):
-        return self._device.summation_delivered
+        return self._device.power
 
-    async def async_added_to_hass(self):
-        self._device.register_callback(self.async_write_ha_state)
+class Emu2EnergyCurrentUsageSensor(SensorEntityBase):
+    should_poll = True
+    
+    def __init__(self, device):
+        super().__init__(device, 'CurrentPeriodUsage')        
 
-    async def async_will_remove_from_hass(self):
-        self._device.remove_callback(self.async_write_ha_state)    
+        self._attr_unique_id = f"{self._device.device_id}_energy_usage"
+        self._attr_name = f"{self._device.device_name} Energy Usage"
+
+        self._attr_device_class = SensorDeviceClass.ENERGY
+        self._attr_state_class = SensorStateClass.TOTAL
+        self._attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
+
+    def update(self):
+        self._device._emu.get_current_period_usage()
+
+    @property
+    def state(self):
+        return self._device.current_usage
+
+    @property
+    def last_reset(self):
+        return self._device.current_usage_start_date

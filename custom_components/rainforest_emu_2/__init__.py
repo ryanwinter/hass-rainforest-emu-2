@@ -1,10 +1,12 @@
 """The Rainforest EMU-2 integration."""
 from __future__ import annotations
-
+import datetime
 import logging
+from typing import Callable
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.util import dt
 from homeassistant.const import (
     Platform,
     EVENT_HOMEASSISTANT_STOP,
@@ -16,8 +18,8 @@ from homeassistant.const import (
 
 from .emu2 import Emu2
 from .emu2_entities import (
-    CurrentSummationDelivered,
-    InstantaneousDemand
+    InstantaneousDemand,
+    CurrentPeriodUsage
 )
 from .const import (
     DOMAIN, 
@@ -70,10 +72,12 @@ class RainforestEmu2Device:
         self._callbacks = set()
 
         self._power = 0.0
-        self._summation_delivered = 0.0
+
+        self._current_usage = 0.0
+        self._current_usage_start_date = dt.utc_from_timestamp(0)
 
         self._emu = Emu2(properties[ATTR_DEVICE_PATH])
-        self._emu.register_callback(self.process_update)
+        self._emu.register_process_callback(self._process_update)
 
         self._serial_loop_task = self._hass.loop.create_task(
             self._emu.serial_read()
@@ -84,22 +88,29 @@ class RainforestEmu2Device:
         if self._emu:
             self._emu.stop_serial()
 
-    def register_callback(self, callback: Callable[[], None]) -> None:
+    def register_callback(self, type: str, callback: Callable[[], None]) -> None:
         """Register callback, called when serial data received."""
-        self._callbacks.add(callback)
+        self._callbacks.add((type, callback))
 
-    def remove_callback(self, callback: Callable[[], None]) -> None:
+    def remove_callback(self, type: str, callback: Callable[[], None]) -> None:
         """Remove previously registered callback."""
-        self._callbacks.discard(callback)
+        self._callbacks.discard((type, callback))
 
-    def process_update(self, type, response) -> None:
+    def _process_update(self, type, response) -> None:
         if type == 'InstantaneousDemand':
-            self._power = self._emu.get_data(InstantaneousDemand).reading
-        elif type == 'CurrentSummationDelivered':
-            self._summation_delivered = self._emu.get_data(CurrentSummationDelivered).summation_delivered
+            self._power = response.reading
+
+        elif type == 'CurrentPeriodUsage':
+            self._current_usage = response.reading
+            self._current_usage_start_date = dt.utc_from_timestamp(response.start_date + 946713600)
 
         for callback in self._callbacks:
-            callback()            
+            if (callback[0] == type):
+                callback[1]()
+
+    @property
+    def connected(self) -> bool:
+        return self._emu.connected
 
     @property
     def device_id(self) -> str:
@@ -130,5 +141,10 @@ class RainforestEmu2Device:
         return self._power
 
     @property
-    def connected(self) -> bool:
-        return self._emu.connected
+    def current_usage(self) -> float:
+        return self._current_usage
+
+    @property
+    def current_usage_start_date(self) -> datetime:
+        return self._current_usage_start_date
+

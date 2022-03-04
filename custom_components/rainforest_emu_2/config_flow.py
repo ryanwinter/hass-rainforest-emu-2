@@ -10,8 +10,6 @@ import xml.etree.ElementTree as ET
 from homeassistant import config_entries
 from homeassistant.components import usb
 from homeassistant.const import (
-    CONF_PORT,
-    CONF_DEVICE_ID,
     ATTR_SW_VERSION,
     ATTR_HW_VERSION,
     ATTR_MANUFACTURER,
@@ -111,10 +109,10 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
             )
 
             _LOGGER.debug("Connected, sending query")
-            await emu2.get_device_info()
+            emu2.get_device_info()
 
             _LOGGER.debug("Connected, waiting for response")
-            await asyncio.sleep(5)
+            await asyncio.sleep(3)
             
             response = emu2.get_data(DeviceInfo)
 
