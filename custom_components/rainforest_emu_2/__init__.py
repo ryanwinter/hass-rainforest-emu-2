@@ -71,9 +71,11 @@ class RainforestEmu2Device:
         self._properties = properties
         self._callbacks = set()
 
-        self._power = 0.0
+        self._power = None
 
-        self._current_usage = 0.0
+        self._current_price = None
+
+        self._current_usage = None
         self._current_usage_start_date = dt.utc_from_timestamp(0)
 
         self._emu = Emu2(properties[ATTR_DEVICE_PATH])
@@ -103,6 +105,9 @@ class RainforestEmu2Device:
         elif type == 'CurrentPeriodUsage':
             self._current_usage = response.reading
             self._current_usage_start_date = dt.utc_from_timestamp(response.start_date + 946713600)
+
+        elif type == 'PriceCluster':
+            self._current_price = response.price_dollars
 
         for callback in self._callbacks:
             if (callback[0] == type):
@@ -139,6 +144,10 @@ class RainforestEmu2Device:
     @property
     def power(self) -> float:
         return self._power
+
+    @property
+    def current_price(self) -> float:
+        return self._current_price
 
     @property
     def current_usage(self) -> float:

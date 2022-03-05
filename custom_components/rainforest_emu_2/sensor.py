@@ -15,7 +15,8 @@ from homeassistant.const import (
     ATTR_HW_VERSION,
     ATTR_SW_VERSION,
     ENERGY_KILO_WATT_HOUR,
-    POWER_KILO_WATT
+    POWER_KILO_WATT,
+    CURRENCY_DOLLAR
 )
 
 from .const import DOMAIN, DEVICE_NAME
@@ -25,12 +26,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     entities = [
         Emu2ActivePowerSensor(device),
-        Emu2EnergyCurrentUsageSensor(device)
+        Emu2CurrentPriceSensor(device),
+        Emu2CurrentPeriodUsageSensor(device)
     ]
     async_add_entities(entities)
 
 class SensorEntityBase(SensorEntity):
-    should_poll = False
+    should_poll = True
 
     def __init__(self, device, observe):
         self._device = device
@@ -58,6 +60,8 @@ class SensorEntityBase(SensorEntity):
         self._device.remove_callback(self._observe, self.async_write_ha_state)
 
 class Emu2ActivePowerSensor(SensorEntityBase):
+    should_poll = False
+    
     def __init__(self, device):
         super().__init__(device, 'InstantaneousDemand')
 
@@ -72,14 +76,30 @@ class Emu2ActivePowerSensor(SensorEntityBase):
     def state(self):
         return self._device.power
 
-class Emu2EnergyCurrentUsageSensor(SensorEntityBase):
-    should_poll = True
-    
+class Emu2CurrentPriceSensor(SensorEntityBase):
+    def __init__(self, device):
+        super().__init__(device, 'PriceCluster')        
+
+        self._attr_unique_id = f"{self._device.device_id}_current_price"
+        self._attr_name = f"{self._device.device_name} Current Price"
+
+        self._attr_device_class = SensorDeviceClass.MONETARY
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_native_unit_of_measurement = f"{CURRENCY_DOLLAR}/{ENERGY_KILO_WATT_HOUR}"
+
+    def update(self):
+        self._device._emu.get_current_price()
+
+    @property
+    def state(self):
+        return self._device.current_price
+
+class Emu2CurrentPeriodUsageSensor(SensorEntityBase):
     def __init__(self, device):
         super().__init__(device, 'CurrentPeriodUsage')        
 
-        self._attr_unique_id = f"{self._device.device_id}_energy_usage"
-        self._attr_name = f"{self._device.device_name} Energy Usage"
+        self._attr_unique_id = f"{self._device.device_id}_current_period_usage"
+        self._attr_name = f"{self._device.device_name} Current Period Usage"
 
         self._attr_device_class = SensorDeviceClass.ENERGY
         self._attr_state_class = SensorStateClass.TOTAL

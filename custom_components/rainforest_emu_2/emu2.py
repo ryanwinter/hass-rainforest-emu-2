@@ -66,7 +66,7 @@ class Emu2:
                 if self._stop_serial == True:
                     return
 
-                await asyncio.sleep(5)
+                await asyncio.sleep(10)
 
             xml_str = ''
             while True:
@@ -77,7 +77,7 @@ class Emu2:
                     line = await self._reader.readline()
                     line = line.decode("utf-8").strip()
 
-                    LOGGER.debug("received %s", line)
+#                    LOGGER.debug("received %s", line)
                     xml_str += line
 
                 except SerialException as ex:
@@ -127,11 +127,12 @@ class Emu2:
 
         bin_string = ElementTree.tostring(root)
 
-        LOGGER.debug("XML out %s", ElementTree.dump(root))
+        LOGGER.debug("XML write %s", bin_string)
 
         try:
             self._writer.write(bin_string)
         except SerialException as ex:
+            LOGGER.error(ex)
             return False
 
         return True
@@ -243,8 +244,8 @@ class Emu2:
     #     Price Commands    #
     #########################
 
-    def get_current_price(self, mac=None, refresh=True):
-        opts = {'MeterMacId': mac, 'Refresh': self._format_yn(refresh)}
+    def get_current_price(self, mac = None):
+        opts = {'MeterMacId': mac}
         return self.issue_command('get_current_price', opts)
 
     # Price is in cents, w/ decimals (e.g. "24.373")

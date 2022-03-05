@@ -1,9 +1,9 @@
+import math
 from xml.etree import ElementTree
 
 # Base class for a response entity. All individual response
 # objects inherit from this.
 class Entity:
-
     def __init__(self, tree):
         self._tree = tree
 
@@ -41,7 +41,6 @@ class Entity:
             if klass.tag_name() == tag:
                 return klass
         return None
-
 
 #####################################
 #       Raven Notifications         #
@@ -147,12 +146,17 @@ class PriceCluster(Entity):
     def _parse(self):
         self.meter_mac = self.find_text("MeterMacId")
         self.timestamp = self.find_hex("TimeStamp")
-        self.price = self.find_text("Price")
+        self.price = self.find_hex("Price")
         self.currency = self.find_text("Currency")      # ISO-4217
-        self.trailing_digits = self.find_text("TrailingDigits")
+        self.trailing_digits = self.find_hex("TrailingDigits")
         self.tier = self.find_text("Tier")
         self.tier_label = self.find_text("TierLabel")
         self.rate_label = self.find_text("RateLabel")
+
+        if (self.price != 0xffffffff):
+            self.price_dollars = self.price / math.pow(10, self.trailing_digits)
+        else:
+            self.price_dollars = None
 
 
 #####################################
