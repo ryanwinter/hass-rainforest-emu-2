@@ -1,0 +1,21 @@
+{
+    "config": {
+        "error": {
+            "not_detected": "Device was not detected"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "device_path": "Device path"
+                },
+                "description": "Set up the Rainforest Emu-2 device integration"
+            },
+            "manual": {
+                "data": {
+                    "device_path": "Device path"
+                },
+                "description": "Set up the Rainforest Emu-2 device integration"
+            }
+        }
+    }
+}

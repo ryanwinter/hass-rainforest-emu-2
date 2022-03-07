@@ -73,9 +73,13 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
                     data = device_properties
                 )
 
-            errors[CONF_DEVICE_PATH] = "device not detected"
+            errors[CONF_DEVICE_PATH] = "not_detected"
 
-        schema = vol.Schema({vol.Required(CONF_DEVICE_PATH): vol.In(list_of_ports)})
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_DEVICE_PATH): vol.In(list_of_ports)
+            }
+        )
         return self.async_show_form(step_id="user", data_schema = schema, errors = errors)
 
 
@@ -96,9 +100,13 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
                     data = device_properties
                 )
 
-            errors[CONF_DEVICE_PATH] = "device not detected"
+            errors[CONF_DEVICE_PATH] = "not_detected"
 
-        schema = vol.Schema({vol.Required(CONF_DEVICE_PATH): str})
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_DEVICE_PATH): str
+            }
+        )
         return self.async_show_form(step_id = "manual", data_schema = schema, errors = errors)
 
     async def get_device_properties(self, device_path: str) -> dict[str, str]:
