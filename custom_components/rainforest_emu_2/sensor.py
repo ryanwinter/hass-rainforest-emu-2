@@ -88,7 +88,7 @@ class Emu2CurrentPriceSensor(SensorEntityBase):
         self._attr_native_unit_of_measurement = f"{CURRENCY_DOLLAR}/{ENERGY_KILO_WATT_HOUR}"
 
     def update(self):
-        self._device._emu.get_current_price()
+        self._device._emu2.get_current_price()
 
     @property
     def state(self):
@@ -106,7 +106,7 @@ class Emu2CurrentPeriodUsageSensor(SensorEntityBase):
         self._attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
 
     def update(self):
-        self._device._emu.get_current_period_usage()
+        self._device._emu2.get_current_period_usage()
 
     @property
     def state(self):

@@ -5,10 +5,9 @@ import logging
 from xml.etree import ElementTree
 from serial import SerialException
 
-#from .emu2_entities import *
 from . import emu2_entities
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 class Emu2:
 
@@ -18,7 +17,6 @@ class Emu2:
     ):
         self._device = device
         self._connected = False
-        self._stop_serial = False
         self._callback = None
         self._writer = None
         self._reader = None
@@ -34,14 +32,11 @@ class Emu2:
     def connected(self) -> bool:
         return self._connected
 
-    # Exit the read loop
-    def stop_serial(self) -> None:
-        self._stop_serial = True
-        self._connected = False
+    def close(self) -> None:
         self._writer.close()
+        self._connected = False
 
-    async def connect(self) -> bool:
-        self._stop_serial = False
+    async def open(self) -> bool:
         if self._connected == True:
             return True
 
@@ -51,7 +46,7 @@ class Emu2:
                 baudrate = 115200
             )
         except SerialException as ex:
-            LOGGER.error(ex)
+            _LOGGER.error(ex)
             self._connected = False
         else:
             self._connected = True
@@ -59,62 +54,37 @@ class Emu2:
         return self._connected
 
     async def serial_read(self):
-        LOGGER.info("Starting serial_read loop")
-        while True:
-            # Wait until connected
-            while await self.connect() == False:
-                if self._stop_serial == True:
-                    return
+        _LOGGER.info("Starting serial_read loop")
 
-                await asyncio.sleep(10)
-
-            xml_str = ''
-            while True:
-                if self._stop_serial == True:
-                    return
-
-                try:
-                    line = await self._reader.readline()
-                    line = line.decode("utf-8").strip()
-
-#                    LOGGER.debug("received %s", line)
-                    xml_str += line
-
-                except SerialException as ex:
-                    LOGGER.error("Error while reading serial device %s: %s", self._device, ex)
-                    self._connected = False
-                    break
-
-                if line.startswith('</'):
-                    try:
-                        self._process_reply(xml_str)
-                    except Exception as ex:
-                        LOGGER.error("something went wrong: ", ex)
-                    xml_str = ''
-
-    def _process_reply(self, xml_str: str) -> None:
-        try:
-            wrapped = itertools.chain('<Root>', xml_str, '</Root>')
-            root = ElementTree.fromstringlist(wrapped)
-        except ElementTree.ParseError:
-            LOGGER.error("Malformed XML: %s", xml_str)
+        if await self.open() == False:
             return
 
-        for tree in root:
-            response_type = tree.tag
-            klass = emu2_entities.Entity.tag_to_class(response_type)
-            if klass is None:
-                LOGGER.debug("Unsupported tag: %s", response_type)
-                continue
+        response = ''
+        while True:
+            try:
+                line = await self._reader.readline()
+            except SerialException as ex:
+                _LOGGER.error(ex)
+                self._connected = False
+                break
+            
+            line = line.decode("utf-8").strip()
+            _LOGGER.debug("received %s", line)
 
-            self._data[response_type] = klass(tree)
+            response += line
+            if line.startswith('</'):
+                try:
+                    self._process_reply(response)
+                    response = ''
+                except Exception as ex:
+                    _LOGGER.error("something went wrong: %s", ex)
 
-            # trigger callback
-            if self._callback is not None:
-                LOGGER.debug("serial_read callback for response %s", response_type)
-                self._callback(response_type, klass(tree))        
 
     def issue_command(self, command, params = None) -> bool:
+        if self._connected == False:
+            _LOGGER.error("issued command while not connected")
+            return False
+
         root = ElementTree.Element('Command')
         name_field = ElementTree.SubElement(root, 'Name')
         name_field.text = command
@@ -127,15 +97,37 @@ class Emu2:
 
         bin_string = ElementTree.tostring(root)
 
-        LOGGER.debug("XML write %s", bin_string)
+        _LOGGER.debug("XML write %s", bin_string)
 
         try:
             self._writer.write(bin_string)
         except SerialException as ex:
-            LOGGER.error(ex)
+            _LOGGER.error(ex)
             return False
 
         return True
+
+    def _process_reply(self, xml_str: str) -> None:
+        try:
+            wrapped = itertools.chain('<Root>', xml_str, '</Root>')
+            root = ElementTree.fromstringlist(wrapped)
+        except ElementTree.ParseError:
+            _LOGGER.error("Malformed XML: %s", xml_str)
+            return
+
+        for tree in root:
+            response_type = tree.tag
+            klass = emu2_entities.Entity.tag_to_class(response_type)
+            if klass is None:
+                _LOGGER.debug("Unsupported tag: %s", response_type)
+                continue
+
+            self._data[response_type] = klass(tree)
+
+            # trigger callback
+            if self._callback is not None:
+                _LOGGER.debug("serial_read callback for response %s", response_type)
+                self._callback(response_type, klass(tree))
 
     # Convert boolean to Y/N for commands
     def _format_yn(self, value):
@@ -165,7 +157,6 @@ class Emu2:
     #################################
     #         Raven Commands        #
     #################################
-
     def restart(self):
         return self.issue_command('restart')
 
@@ -201,7 +192,6 @@ class Emu2:
     ##########################
     #     Meter Commands     #
     ##########################
-
     def get_meter_info(self, mac=None):
         opts = {'MeterMacId': mac}
         return self.issue_command('get_meter_info', opts)
@@ -210,7 +200,6 @@ class Emu2:
         return self.issue_command('get_network_info')
 
     def set_meter_info(self, mac=None, nickname=None, account=None, auth=None, host=None, enabled=None):
-
         opts = {
             'MeterMacId': mac,
             'NickName': nickname,
@@ -224,7 +213,6 @@ class Emu2:
     ############################
     #       Time Commands      #
     ############################
-
     def get_time(self, mac=None, refresh=True):
         opts = {'MeterMacId': mac, 'Refresh': self._format_yn(refresh)}
         return self.issue_command('get_time', opts)
@@ -243,7 +231,6 @@ class Emu2:
     #########################
     #     Price Commands    #
     #########################
-
     def get_current_price(self, mac = None):
         opts = {'MeterMacId': mac}
         return self.issue_command('get_current_price', opts)
@@ -268,7 +255,6 @@ class Emu2:
     ###############################
     #   Simple Metering Commands  #
     ###############################
-
     def get_instantaneous_demand(self, mac=None, refresh=True):
         opts = {'MeterMacId': mac, 'Refresh': self._format_yn(refresh)}
         return self.issue_command('get_instantaneous_demand', opts)

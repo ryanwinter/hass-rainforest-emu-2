@@ -1,5 +1,7 @@
 """The Rainforest EMU-2 integration."""
 from __future__ import annotations
+
+import asyncio
 import datetime
 import logging
 from typing import Callable
@@ -17,10 +19,6 @@ from homeassistant.const import (
 )
 
 from .emu2 import Emu2
-from .emu2_entities import (
-    InstantaneousDemand,
-    CurrentPeriodUsage
-)
 from .const import (
     DOMAIN, 
     DEVICE_ID,
@@ -35,16 +33,14 @@ PLATFORMS: list[str] = [Platform.SENSOR]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Rainforest EMU-2 from a config entry."""
-    emu2 = RainforestEmu2Device(hass, entry.data)
+    emu2device = RainforestEmu2Device(hass, entry.data)
 
     async def async_shutdown(event):
         # Handle shutdown
-        emu2.stop()
+        emu2device.stop()
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, async_shutdown)
-
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = emu2
-
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = emu2device
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
 
     return True
@@ -53,8 +49,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
-    emu2 = hass.data[DOMAIN][entry.entry_id]
-    emu2.stop()
+    emu2device = hass.data[DOMAIN][entry.entry_id]
+    await emu2device.stop()
 
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
@@ -78,17 +74,20 @@ class RainforestEmu2Device:
         self._current_usage = None
         self._current_usage_start_date = dt.utc_from_timestamp(0)
 
-        self._emu = Emu2(properties[ATTR_DEVICE_PATH])
-        self._emu.register_process_callback(self._process_update)
+        self._emu2 = Emu2(properties[ATTR_DEVICE_PATH])
+        self._emu2.register_process_callback(self._process_update)
 
-        self._serial_loop_task = self._hass.loop.create_task(
-            self._emu.serial_read()
-        )
+        self._serial_loop_task = self._hass.loop.create_task(self._emu2.serial_read())
 
-    def stop(self):
-        """Close resources."""
-        if self._emu:
-            self._emu.stop_serial()
+    async def stop(self):
+        self._serial_loop_task.cancel()
+
+        try:
+            await self._serial_loop_task
+        except asyncio.CancelledError as ex:
+            pass
+
+        self._emu2.close()
 
     def register_callback(self, type: str, callback: Callable[[], None]) -> None:
         """Register callback, called when serial data received."""
@@ -115,7 +114,7 @@ class RainforestEmu2Device:
 
     @property
     def connected(self) -> bool:
-        return self._emu.connected
+        return self._emu2.connected
 
     @property
     def device_id(self) -> str:
@@ -156,4 +155,3 @@ class RainforestEmu2Device:
     @property
     def current_usage_start_date(self) -> datetime:
         return self._current_usage_start_date
-

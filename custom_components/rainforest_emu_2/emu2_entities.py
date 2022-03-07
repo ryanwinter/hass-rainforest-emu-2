@@ -12,8 +12,8 @@ class Entity:
 
         self._parse()
 
-    def __repr__(self):
-        return ElementTree.tostring(self._tree).decode('ASCII')
+    # def __repr__(self):
+    #     return ElementTree.tostring(self._tree).decode('ASCII')
 
     # Hook for subclasses to override to provide special parsing
     # for computing their parameters.
@@ -45,7 +45,6 @@ class Entity:
 #####################################
 #       Raven Notifications         #
 #####################################
-
 class ConnectionStatus(Entity):
     def _parse(self):
         self.meter_mac = self.find_text('MeterMacId')
@@ -56,7 +55,6 @@ class ConnectionStatus(Entity):
         self.channel = self.find_text("Channel")                # 11 to 26
         self.short_address = self.find_text("ShortAddr")        # 0x0000 to 0xFFFF
         self.link_strength = self.find_text("LinkStrength")     # 0x00 to 0x64
-
 
 class DeviceInfo(Entity):
     def _parse(self):
@@ -69,7 +67,6 @@ class DeviceInfo(Entity):
         self.model_id = self.find_text("ModelId")
         self.date_code = self.find_text("DateCode")
 
-
 class ScheduleInfo(Entity):
     def _parse(self):
         self.meter_mac = self.find_text("MeterMacId")
@@ -77,17 +74,14 @@ class ScheduleInfo(Entity):
         self.frequency = self.find_text("Frequency")
         self.enabled = self.find_text("Enabled")
 
-
 # TODO: There can be more than one MeterMacId
 class MeterList(Entity):
     def _parse(self):
         self.meter_mac = self.find_text("MeterMacId")
 
-
 #####################################
 #       Meter Notifications         #
 #####################################
-
 class MeterInfo(Entity):
     def _parse(self):
         self.meter_mac = self.find_text("MeterMacId")
@@ -97,7 +91,6 @@ class MeterInfo(Entity):
         self.auth = self.find_text("Auth")
         self.host = self.find_text("Host")
         self.enabled = self.find_text("Enabled")
-
 
 class NetworkInfo(Entity):
     def _parse(self):
@@ -110,7 +103,6 @@ class NetworkInfo(Entity):
         self.short_address = self.find_text("ShortAddr")
         self.link_strength = self.find_text("LinkStrength")
 
-
 #####################################
 #        Time Notifications         #
 #####################################
@@ -122,11 +114,9 @@ class TimeCluster(Entity):
         self.utc_time = self.find_text("UTCTime")
         self.local_time = self.find_text("LocalTime")
 
-
 #####################################
 #      Message Notifications        #
 #####################################
-
 class MessageCluster(Entity):
     def _parse(self):
         self.meter_mac = self.find_text("MeterMacId")
@@ -137,11 +127,9 @@ class MessageCluster(Entity):
         self.confirmed = self.find_text("Confirmed")
         self.queue = self.find_text("Queue")
 
-
 #####################################
 #        Price Notifications        #
 #####################################
-
 class PriceCluster(Entity):
     def _parse(self):
         self.meter_mac = self.find_text("MeterMacId")
@@ -158,11 +146,9 @@ class PriceCluster(Entity):
         else:
             self.price_dollars = None
 
-
 #####################################
 #   Simple Metering Notifications   #
 #####################################
-
 class InstantaneousDemand(Entity):
     def _parse(self):
         self.meter_mac = self.find_text("MeterMacId")
@@ -179,10 +165,9 @@ class InstantaneousDemand(Entity):
 
         # Compute actual reading (protecting from divide-by-zero)
         if self.divisor != 0:
-            self.reading = self.demand * self.multiplier / float(self.divisor)
+            self.reading = round(self.demand * self.multiplier / float(self.divisor), self.digits_right)
         else:
             self.reading = 0
-
 
 class CurrentSummationDelivered(Entity):
     def _parse(self):
@@ -198,12 +183,11 @@ class CurrentSummationDelivered(Entity):
 
         # Compute actual reading (protecting from divide-by-zero)
         if self.divisor != 0:
-            self.delivered = self.summation_delivered * self.multiplier / float(self.divisor)
-            self.received = self.summation_received * self.multiplier / float(self.divisor)
+            self.delivered = round(self.summation_delivered * self.multiplier / float(self.divisor), self.digits_right)
+            self.received = round(self.summation_received * self.multiplier / float(self.divisor), self.digits_right)
         else:
             self.delivered = 0
             self.received = 0
-
 
 class CurrentPeriodUsage(Entity):
     def _parse(self):
@@ -219,10 +203,9 @@ class CurrentPeriodUsage(Entity):
 
         # Compute actual reading (protecting from divide-by-zero)
         if self.divisor != 0:
-            self.reading = self.current_usage * self.multiplier / float(self.divisor)
+            self.reading = round(self.current_usage * self.multiplier / float(self.divisor), self.digits_right)
         else:
             self.reading = 0
-
 
 class LastPeriodUsage(Entity):
     def _parse(self):
@@ -235,7 +218,6 @@ class LastPeriodUsage(Entity):
         self.suppress_leading_zero = self.find_text("SuppressLeadingZero")
         self.start_date = self.find_hex("StartDate")
         self.end_date = self.find_hex("EndDate")
-
 
 # TODO: IntervalData may appear more than once
 class ProfileData(Entity):

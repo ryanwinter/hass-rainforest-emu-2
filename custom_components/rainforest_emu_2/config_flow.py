@@ -7,6 +7,8 @@ import serial.tools.list_ports
 import voluptuous as vol
 import xml.etree.ElementTree as ET
 
+from serial import Serial, SerialException
+
 from homeassistant import config_entries
 from homeassistant.components import usb
 from homeassistant.const import (
@@ -61,7 +63,7 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
                 usb.get_serial_by_id, port.device
             )
 
-            device_properties = await self.get_device_id(device_path)
+            device_properties = await self.get_device_properties(device_path)
             if device_properties is not None:
                 await self.async_set_unique_id(device_properties[ATTR_DEVICE_MAC_ID])
                 self._abort_if_unique_id_configured()
@@ -79,48 +81,48 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
 
     async def async_step_manual(self, user_input = None):
         """Manually specify the path."""
-        dev_path = user_input[CONF_DEVICE_PATH]
+        errors = {}
 
-        if dev_path is not None:
-            dev_path = user_input[CONF_DEVICE_PATH]
+        if user_input is not None:
+            device_path = user_input[CONF_DEVICE_PATH]
 
-            device_id = await self.get_device_id(dev_path)
+            device_properties = await self.get_device_properties(device_path)
+            if device_properties is not None:
+                await self.async_set_unique_id(device_properties[ATTR_DEVICE_MAC_ID])
+                self._abort_if_unique_id_configured()
 
-#            if device_id is not None
+                return self.async_create_entry(
+                    title = device_path,
+                    data = device_properties
+                )
 
-
-            # return self.async_create_entry(
-            #     title=port,
-            #     data={CONF_PORT: port}
-            # )        
+            errors[CONF_DEVICE_PATH] = "device not detected"
 
         schema = vol.Schema({vol.Required(CONF_DEVICE_PATH): str})
-        return self.async_show_form(step_id = "manual", data_schema=schema)   
+        return self.async_show_form(step_id = "manual", data_schema = schema, errors = errors)
 
-    async def get_device_id(self, device_path: str) -> dict[str, str]:
-        """Probe the the device for the device mac id."""
+    async def get_device_properties(self, device_path: str) -> dict[str, str]:
+        """Probe the the device for the its properties."""
+
         emu2 = Emu2(device_path)
-        
-        response = None
-        if await emu2.connect() == True:
-            # Start the monitoring loop
-            serial_loop_task = self.hass.loop.create_task(
-                emu2.serial_read()
-            )
 
-            _LOGGER.debug("Connected, sending query")
-            emu2.get_device_info()
-
-            _LOGGER.debug("Connected, waiting for response")
-            await asyncio.sleep(3)
-            
-            response = emu2.get_data(DeviceInfo)
-
-        # End the monitoring loop
-        emu2.stop_serial()
-
-        if response is None:
+        if await emu2.open() == False:
             return None
+
+        serial_loop_task = self.hass.loop.create_task(emu2.serial_read())
+
+        emu2.get_device_info()
+        await asyncio.sleep(3)
+        serial_loop_task.cancel()
+
+        try:
+            await serial_loop_task
+        except asyncio.CancelledError as ex:
+            _LOGGER.debug("Cancelled, caught %s", ex)
+
+        emu2.close()
+
+        response = emu2.get_data(DeviceInfo)
 
         return {
             ATTR_DEVICE_PATH: device_path,
