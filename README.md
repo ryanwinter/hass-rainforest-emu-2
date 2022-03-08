@@ -2,6 +2,9 @@
 [![License](https://img.shields.io/github/license/ryanwinter/hass-rainforest-emu-2.svg?style=flat-square)](https://github.com/ryanwinter/hass-rainforest-emu-2/blob/main/LICENSE)
 [![Blog](https://img.shields.io/badge/blog-Ryan%20Winter-orange?style=flat-square)](https://ryanwinter.org)
 
+[![HACS Action](https://github.com/ryanwinter/hass-rainforest-emu-2/actions/workflows/hacs.yml/badge.svg)](https://github.com/ryanwinter/hass-rainforest-emu-2/actions/workflows/hacs.yml)
+[![Validate with hassfest](https://github.com/ryanwinter/hass-rainforest-emu-2/actions/workflows/hassfest.yml/badge.svg)](https://github.com/ryanwinter/hass-rainforest-emu-2/actions/workflows/hassfest.yml)
+
 # Rainforest EMU-2
 
 Integrate the [Rainforest EMU-2](https://www.rainforestautomation.com/rfa-z105-2-emu-2-2) into the Home Assistant Energy Dashboard.
