@@ -124,6 +124,8 @@ class Emu2:
             async with self._writer_lock:
                 self._writer.write(bin_string)
                 await self._writer.drain()
+                # Throttle time between writes
+                await asyncio.sleep(1)
 
         except SerialException as ex:
             _LOGGER.error(ex)
