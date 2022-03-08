@@ -120,7 +120,7 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
         serial_loop_task = self.hass.loop.create_task(emu2.serial_read())
         await emu2.wait_connected(5)
 
-        emu2.get_device_info()
+        await emu2.get_device_info()
 
         await asyncio.sleep(2)
         serial_loop_task.cancel()
@@ -130,7 +130,7 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
         except asyncio.CancelledError as ex:
             _LOGGER.debug("Cancelled, caught %s", ex)
 
-        emu2.close()
+        await emu2.close()
 
         response = emu2.get_data(DeviceInfo)
 
