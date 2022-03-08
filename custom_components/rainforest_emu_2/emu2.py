@@ -98,7 +98,7 @@ class Emu2:
                     _LOGGER.error("something went wrong: %s", ex)
 
 
-    def issue_command(self, command, params = None) -> bool:
+    async def issue_command(self, command, params = None) -> bool:
         if self._connected == False:
             _LOGGER.error("issued command while not connected")
             return False
@@ -119,6 +119,7 @@ class Emu2:
 
         try:
             self._writer.write(bin_string)
+            await self._writer.drain()
         except SerialException as ex:
             _LOGGER.error(ex)
             return False
@@ -175,21 +176,21 @@ class Emu2:
     #################################
     #         Raven Commands        #
     #################################
-    def restart(self):
-        return self.issue_command('restart')
+    async def restart(self):
+        return await self.issue_command('restart')
 
-    def get_connection_status(self):
-        return self.issue_command('get_connection_status')
+    async def get_connection_status(self):
+        return await self.issue_command('get_connection_status')
 
-    def get_device_info(self):
-        return self.issue_command('get_device_info')
+    async def get_device_info(self):
+        return await self.issue_command('get_device_info')
 
-    def get_schedule(self, mac=None, event=None):
+    async def get_schedule(self, mac=None, event=None):
         self._check_valid_event(event)
         opts = {'MeterMacId': mac, 'Event': event}
-        return self.issue_command('get_schedule', opts)
+        return await self.issue_command('get_schedule', opts)
 
-    def set_schedule(self, mac=None, event=None, frequency=10, enabled=True):
+    async def set_schedule(self, mac=None, event=None, frequency=10, enabled=True):
         self._check_valid_event(event, allow_none=False)
         opts = {
             'MeterMacId': mac,
@@ -197,27 +198,27 @@ class Emu2:
             'Frequency': self._format_hex(frequency),
             'Enabled': self._format_yn(enabled)
         }
-        return self.issue_command('set_schedule', opts)
+        return await self.issue_command('set_schedule', opts)
 
-    def set_schedule_default(self, mac=None, event=None):
+    async def set_schedule_default(self, mac=None, event=None):
         self._check_valid_event(event)
         opts = {'MeterMacId': mac, 'Event': event}
-        return self.issue_command('set_schedule_default', opts)
+        return await self.issue_command('set_schedule_default', opts)
 
-    def get_meter_list(self):
-        return self.issue_command('get_meter_list')
+    async def get_meter_list(self):
+        return await self.issue_command('get_meter_list')
 
     ##########################
     #     Meter Commands     #
     ##########################
-    def get_meter_info(self, mac=None):
+    async def get_meter_info(self, mac=None):
         opts = {'MeterMacId': mac}
-        return self.issue_command('get_meter_info', opts)
+        return await self.issue_command('get_meter_info', opts)
 
-    def get_network_info(self):
-        return self.issue_command('get_network_info')
+    async def get_network_info(self):
+        return await self.issue_command('get_network_info')
 
-    def set_meter_info(self, mac=None, nickname=None, account=None, auth=None, host=None, enabled=None):
+    async def set_meter_info(self, mac=None, nickname=None, account=None, auth=None, host=None, enabled=None):
         opts = {
             'MeterMacId': mac,
             'NickName': nickname,
@@ -226,35 +227,35 @@ class Emu2:
             'Host': host,
             'Enabled': self._format_yn(enabled)
         }
-        return self.issue_command('set_meter_info', opts)
+        return await self.issue_command('set_meter_info', opts)
 
     ############################
     #       Time Commands      #
     ############################
-    def get_time(self, mac=None, refresh=True):
+    async def get_time(self, mac=None, refresh=True):
         opts = {'MeterMacId': mac, 'Refresh': self._format_yn(refresh)}
-        return self.issue_command('get_time', opts)
+        return await self.issue_command('get_time', opts)
 
-    def get_message(self, mac=None, refresh=True):
+    async def get_message(self, mac=None, refresh=True):
         opts = {'MeterMacId': mac, 'Refresh': self._format_yn(refresh)}
-        return self.issue_command('get_message', opts)
+        return await self.issue_command('get_message', opts)
 
-    def confirm_message(self, mac=None, message_id=None):
+    async def confirm_message(self, mac=None, message_id=None):
         if message_id is None:
             raise ValueError('Message id is required')
 
         opts = {'MeterMacId': mac, 'Id': self._format_hex(message_id)}
-        return self.issue_command('confirm_message', opts)
+        return await self.issue_command('confirm_message', opts)
 
     #########################
     #     Price Commands    #
     #########################
-    def get_current_price(self, mac = None):
+    async def get_current_price(self, mac = None):
         opts = {'MeterMacId': mac}
-        return self.issue_command('get_current_price', opts)
+        return await self.issue_command('get_current_price', opts)
 
     # Price is in cents, w/ decimals (e.g. "24.373")
-    def set_current_price(self, mac=None, price="0.0"):
+    async def set_current_price(self, mac=None, price="0.0"):
         parts = price.split(".", 1)
         if len(parts) == 1:
             trailing = 2
@@ -268,35 +269,35 @@ class Emu2:
             'Price': self._format_hex(price),
             'TrailingDigits': self._format_hex(trailing, digits=2)
         }
-        return self.issue_command('set_current_price', opts)
+        return await self.issue_command('set_current_price', opts)
 
     ###############################
     #   Simple Metering Commands  #
     ###############################
-    def get_instantaneous_demand(self, mac=None, refresh=True):
+    async def get_instantaneous_demand(self, mac=None, refresh=True):
         opts = {'MeterMacId': mac, 'Refresh': self._format_yn(refresh)}
-        return self.issue_command('get_instantaneous_demand', opts)
+        return await self.issue_command('get_instantaneous_demand', opts)
 
-    def get_current_summation_delivered(self, mac=None, refresh=True):
+    async def get_current_summation_delivered(self, mac=None, refresh=True):
         opts = {'MeterMacId': mac, 'Refresh': self._format_yn(refresh)}
-        return self.issue_command('get_current_summation_delivered', opts)
+        return await self.issue_command('get_current_summation_delivered', opts)
 
-    def get_current_period_usage(self, mac = None):
+    async def get_current_period_usage(self, mac = None):
         opts = {'MeterMacId': mac}
-        return self.issue_command('get_current_period_usage', opts)
+        return await self.issue_command('get_current_period_usage', opts)
 
-    def get_last_period_usage(self, mac=None):
+    async def get_last_period_usage(self, mac=None):
         opts = {'MeterMacId': mac}
-        return self.issue_command('get_last_period_usage', opts)
+        return await self.issue_command('get_last_period_usage', opts)
 
-    def close_current_period(self, mac=None):
+    async def close_current_period(self, mac=None):
         opts = {'MeterMacId': mac}
-        return self.issue_command('close_current_period', opts)
+        return await self.issue_command('close_current_period', opts)
 
-    def set_fast_poll(self, mac=None, frequency=4, duration=20):
+    async def set_fast_poll(self, mac=None, frequency=4, duration=20):
         opts = {
             'MeterMacId': mac,
             'Frequency': self._format_hex(frequency, digits=4),
             'Duration': self._format_hex(duration, digits=4)
         }
-        return self.issue_command('set_fast_poll', opts)
+        return await self.issue_command('set_fast_poll', opts)
