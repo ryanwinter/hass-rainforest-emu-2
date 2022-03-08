@@ -37,7 +37,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def async_shutdown(event):
         # Handle shutdown
-        emu2device.stop()
+        await emu2device.stop()
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, async_shutdown)
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = emu2device
@@ -87,7 +87,7 @@ class RainforestEmu2Device:
         except asyncio.CancelledError as ex:
             pass
 
-        self._emu2.close()
+        await self._emu2.close()
 
     def register_callback(self, type: str, callback: Callable[[], None]) -> None:
         """Register callback, called when serial data received."""
