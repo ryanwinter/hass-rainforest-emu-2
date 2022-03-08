@@ -2,7 +2,7 @@
   "domain": "rainforest_emu_2",
   "name": "Rainforest EMU-2",
   "documentation": "https://github.com/ryanwinter/hass-rainforest-emu-2",
-  "issue_tracker": "https://github.com/ryanwinter/hass-rainforest-emu-2/issues"
+  "issue_tracker": "https://github.com/ryanwinter/hass-rainforest-emu-2/issues",
   "dependencies": ["usb"],
   "codeowners": ["@ryanwinter"],
   "requirements": [
