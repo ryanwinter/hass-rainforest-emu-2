@@ -13,7 +13,7 @@
   "config_flow": true,
   "usb": [
     {
-      "vid": "04b4",
+      "vid": "04B4",
       "pid": "0003",
       "manufacturer": "*rainforest*",
       "description": "*emu-2*"
