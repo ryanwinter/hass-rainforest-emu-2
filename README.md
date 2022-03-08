@@ -26,4 +26,4 @@ Integrate the [Rainforest EMU-2](https://www.rainforestautomation.com/rfa-z105-2
 
 # Result
 
-![Dashboard](images/dashboard.png)
+![Dashboard](https://raw.githubusercontent.com/ryanwinter/hass-rainforest-emu-2/main/images/dashboard.png)
