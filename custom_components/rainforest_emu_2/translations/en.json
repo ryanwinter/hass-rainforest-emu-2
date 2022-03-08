@@ -8,13 +8,13 @@
                 "data": {
                     "device_path": "Device path"
                 },
-                "description": "Set up the Rainforest Emu-2 device integration"
+                "description": "Set up the Rainforest EMU-2 device integration"
             },
             "manual": {
                 "data": {
                     "device_path": "Device path"
                 },
-                "description": "Set up the Rainforest Emu-2 device integration"
+                "description": "Set up the Rainforest EMU-2 device integration"
             }
         }
     }
