@@ -1,7 +1,8 @@
 {
   "domain": "rainforest_emu_2",
   "name": "Rainforest EMU-2",
-  "documentation": "https://github.com/ryanwinter/hass-rainforest-emu-2/blob/main/custom_components/rainforest-emu-2/readme.md",
+  "documentation": "https://github.com/ryanwinter/hass-rainforest-emu-2",
+  "issue_tracker": "https://github.com/ryanwinter/hass-rainforest-emu-2/issues"
   "dependencies": ["usb"],
   "codeowners": ["@ryanwinter"],
   "requirements": [
@@ -15,7 +16,7 @@
       "vid": "04b4",
       "pid": "0003",
       "manufacturer": "*Rainforest*",
-      "description": "*EMU-2*"
+      "description": "*emu-2*"
     }
   ]
 }
