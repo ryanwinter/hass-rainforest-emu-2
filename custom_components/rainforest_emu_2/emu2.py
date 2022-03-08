@@ -20,6 +20,7 @@ class Emu2:
         self._callback = None
         self._writer = None
         self._reader = None
+        self._writer_lock = asyncio.Lock()
 
         self._data = {}
 
@@ -36,7 +37,7 @@ class Emu2:
         if await self.open() == False:
             return False
 
-        self.close()
+        await self.close()
         return True
 
     async def wait_connected(self, timeout) -> bool:
@@ -50,8 +51,10 @@ class Emu2:
 
         return True
 
-    def close(self) -> None:
+    async def close(self) -> None:
         self._writer.close()
+        await self._writer.wait_closed()
+        
         self._connected = False
 
     async def open(self) -> bool:
@@ -118,8 +121,10 @@ class Emu2:
         _LOGGER.debug("XML write %s", bin_string)
 
         try:
-            self._writer.write(bin_string)
-            await self._writer.drain()
+            async with self._writer_lock:
+                self._writer.write(bin_string)
+                await self._writer.drain()
+
         except SerialException as ex:
             _LOGGER.error(ex)
             return False
