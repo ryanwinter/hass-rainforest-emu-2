@@ -114,13 +114,15 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
 
         emu2 = Emu2(device_path)
 
-        if await emu2.open() == False:
+        if await emu2.test_available() == False:
             return None
 
         serial_loop_task = self.hass.loop.create_task(emu2.serial_read())
+        await emu2.wait_connected(5)
 
         emu2.get_device_info()
-        await asyncio.sleep(3)
+
+        await asyncio.sleep(2)
         serial_loop_task.cancel()
 
         try:
@@ -131,6 +133,9 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
         emu2.close()
 
         response = emu2.get_data(DeviceInfo)
+
+        if response == None:
+            return None
 
         return {
             ATTR_DEVICE_PATH: device_path,

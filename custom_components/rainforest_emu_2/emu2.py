@@ -32,6 +32,24 @@ class Emu2:
     def connected(self) -> bool:
         return self._connected
 
+    async def test_available(self) -> bool:
+        if await self.open() == False:
+            return False
+
+        self.close()
+        return True
+
+    async def wait_connected(self, timeout) -> bool:
+        count = 0
+        while self._connected == False:
+            await asyncio.sleep(1)
+
+            count += 1
+            if (count > timeout):
+                return False
+
+        return True
+
     def close(self) -> None:
         self._writer.close()
         self._connected = False
