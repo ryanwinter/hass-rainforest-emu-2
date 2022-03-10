@@ -1,5 +1,7 @@
 
 [![License](https://img.shields.io/github/license/ryanwinter/hass-rainforest-emu-2.svg?style=flat-square)](https://github.com/ryanwinter/hass-rainforest-emu-2/blob/main/LICENSE)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
+
 [![Blog](https://img.shields.io/badge/blog-Ryan%20Winter-orange?style=flat-square)](https://ryanwinter.org)
 
 [![HACS Action](https://github.com/ryanwinter/hass-rainforest-emu-2/actions/workflows/hacs.yml/badge.svg)](https://github.com/ryanwinter/hass-rainforest-emu-2/actions/workflows/hacs.yml)
