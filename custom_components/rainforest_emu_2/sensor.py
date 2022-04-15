@@ -27,7 +27,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     entities = [
         Emu2ActivePowerSensor(device),
         Emu2CurrentPriceSensor(device),
-        Emu2CurrentPeriodUsageSensor(device)
+        Emu2CurrentPeriodUsageSensor(device),
+        Emu2SummationDeliveredSensor(device)
     ]
     async_add_entities(entities)
 
@@ -115,3 +116,20 @@ class Emu2CurrentPeriodUsageSensor(SensorEntityBase):
     @property
     def last_reset(self):
         return self._device.current_usage_start_date
+    
+class Emu2SummationDeliveredSensor(SensorEntityBase):
+    should_poll = False
+
+    def __init__(self, device):
+        super().__init__(device, 'CurrentSummationDelivered')        
+
+        self._attr_unique_id = f"{self._device.device_id}_summation_delivered"
+        self._attr_name = f"{self._device.device_name} Summation Delivered"
+
+        self._attr_device_class = SensorDeviceClass.ENERGY
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
+
+    @property
+    def state(self):
+        return self._device.summation_delivered
