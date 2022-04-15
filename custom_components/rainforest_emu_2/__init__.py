@@ -108,6 +108,9 @@ class RainforestEmu2Device:
 
         elif type == 'PriceCluster':
             self._current_price = response.price_dollars
+            
+        elif type == 'CurrentSummationDelivered':
+            self._summation_delivered = response.summation_delivered
 
         for callback in self._callbacks:
             if (callback[0] == type):
