@@ -68,6 +68,7 @@ class RainforestEmu2Device:
         self._callbacks = set()
 
         self._power = None
+        self._summation_delivered = None
 
         self._current_price = None
 
@@ -143,6 +144,10 @@ class RainforestEmu2Device:
     @property
     def power(self) -> float:
         return self._power
+
+    @property
+    def summation_delivered(self) -> float:
+        return self._summation_delivered
 
     @property
     def current_price(self) -> float:
