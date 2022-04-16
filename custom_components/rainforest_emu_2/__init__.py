@@ -68,7 +68,9 @@ class RainforestEmu2Device:
         self._callbacks = set()
 
         self._power = None
+        
         self._summation_delivered = None
+        self._summation_received = None
 
         self._current_price = None
 
@@ -110,7 +112,8 @@ class RainforestEmu2Device:
             self._current_price = response.price_dollars
             
         elif type == 'CurrentSummationDelivered':
-            self._summation_delivered = response.summation_delivered
+            self._summation_delivered = response.delivered
+            self._summation_received = response.received
 
         for callback in self._callbacks:
             if (callback[0] == type):
@@ -151,6 +154,10 @@ class RainforestEmu2Device:
     @property
     def summation_delivered(self) -> float:
         return self._summation_delivered
+    
+    @property
+    def summation_received(self) -> float:
+        return self._summation_received
 
     @property
     def current_price(self) -> float:
