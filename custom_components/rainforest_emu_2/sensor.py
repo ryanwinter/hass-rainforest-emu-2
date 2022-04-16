@@ -28,7 +28,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         Emu2ActivePowerSensor(device),
         Emu2CurrentPriceSensor(device),
         Emu2CurrentPeriodUsageSensor(device),
-        Emu2SummationDeliveredSensor(device)
+        Emu2SummationDeliveredSensor(device),
+        Emu2SummationReceivedSensor(device)
     ]
     async_add_entities(entities)
 
@@ -133,3 +134,20 @@ class Emu2SummationDeliveredSensor(SensorEntityBase):
     @property
     def state(self):
         return self._device.summation_delivered
+
+class Emu2SummationReceivedSensor(SensorEntityBase):
+    should_poll = False
+
+    def __init__(self, device):
+        super().__init__(device, 'CurrentSummationReceived')        
+
+        self._attr_unique_id = f"{self._device.device_id}_summation_recieved"
+        self._attr_name = f"{self._device.device_name} Summation Received"
+
+        self._attr_device_class = SensorDeviceClass.ENERGY
+        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+        self._attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
+
+    @property
+    def state(self):
+        return self._device.summation_received
