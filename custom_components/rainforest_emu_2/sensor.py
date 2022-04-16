@@ -128,7 +128,7 @@ class Emu2SummationDeliveredSensor(SensorEntityBase):
         self._attr_name = f"{self._device.device_name} Summation Delivered"
 
         self._attr_device_class = SensorDeviceClass.ENERGY
-        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
         self._attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
 
     @property
