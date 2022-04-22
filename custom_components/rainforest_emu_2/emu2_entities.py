@@ -201,6 +201,9 @@ class CurrentPeriodUsage(Entity):
         self.suppress_leading_zero = self.find_text("SuppressLeadingZero")
         self.start_date = self.find_hex("StartDate")
 
+        # accept negative numbers
+        self.current_usage = -(self.current_usage & 0x80000000) | (self.current_usage & 0x7fffffff)
+
         # Compute actual reading (protecting from divide-by-zero)
         if self.divisor != 0:
             self.reading = round(self.current_usage * self.multiplier / float(self.divisor), self.digits_right)
