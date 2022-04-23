@@ -73,6 +73,7 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
                     data = device_properties
                 )
 
+            _LOGGER.info("EMU-2 device not detected on %s", device_path)
             errors[CONF_DEVICE_PATH] = "not_detected"
 
         schema = vol.Schema(
