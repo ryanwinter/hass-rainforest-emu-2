@@ -25,6 +25,7 @@ class Emu2:
         self._data = {}
 
     def get_data(self, klass):
+        _LOGGER.debug("Requesting data %s", klass)
         return self._data.get(klass.tag_name())
 
     def register_process_callback(self, callback):
@@ -52,8 +53,9 @@ class Emu2:
         return True
 
     async def close(self) -> None:
-        self._writer.close()
-        await self._writer.wait_closed()
+        if self._writer is not None:
+            self._writer.close()
+            await self._writer.wait_closed()
         
         self._connected = False
 

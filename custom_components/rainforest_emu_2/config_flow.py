@@ -134,7 +134,8 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
 
         response = emu2.get_data(DeviceInfo)
 
-        if response == None:
+        if response is None:
+            _LOGGER.debug("get_devices_properties response is None")
             return None
 
         return {
