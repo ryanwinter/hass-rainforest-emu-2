@@ -148,7 +148,8 @@ class Emu2SummationReceivedSensor(SensorEntityBase):
     should_poll = False
 
     def __init__(self, device):
-        super().__init__(device, "CurrentSummationReceived")
+        # The received information is part of the Summation Delivered XML packet
+        super().__init__(device, "CurrentSummationDelivered")
 
         self._attr_unique_id = f"{self._device.device_id}_summation_received"
         self._attr_name = f"{self._device.device_name} Summation Received"
