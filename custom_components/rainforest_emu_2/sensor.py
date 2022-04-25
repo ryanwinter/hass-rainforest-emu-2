@@ -3,23 +3,24 @@ from __future__ import annotations
 
 from homeassistant.core import callback
 from homeassistant.components.sensor import (
-    SensorEntity, 
-    SensorStateClass, 
-    SensorDeviceClass
+    SensorEntity,
+    SensorStateClass,
+    SensorDeviceClass,
 )
 from homeassistant.const import (
-    ATTR_IDENTIFIERS, 
-    ATTR_NAME, 
+    ATTR_IDENTIFIERS,
+    ATTR_NAME,
     ATTR_MANUFACTURER,
     ATTR_MODEL,
     ATTR_HW_VERSION,
     ATTR_SW_VERSION,
     ENERGY_KILO_WATT_HOUR,
     POWER_KILO_WATT,
-    CURRENCY_DOLLAR
+    CURRENCY_DOLLAR,
 )
 
 from .const import DOMAIN, DEVICE_NAME
+
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     device = hass.data[DOMAIN][config_entry.entry_id]
@@ -29,9 +30,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         Emu2CurrentPriceSensor(device),
         Emu2CurrentPeriodUsageSensor(device),
         Emu2SummationDeliveredSensor(device),
-        Emu2SummationReceivedSensor(device)
+        Emu2SummationReceivedSensor(device),
     ]
     async_add_entities(entities)
+
 
 class SensorEntityBase(SensorEntity):
     should_poll = True
@@ -48,7 +50,7 @@ class SensorEntityBase(SensorEntity):
             ATTR_MANUFACTURER: self._device.device_manufacturer,
             ATTR_MODEL: self._device.device_model,
             ATTR_HW_VERSION: self._device.device_hw_version,
-            ATTR_SW_VERSION: self._device.device_sw_version
+            ATTR_SW_VERSION: self._device.device_sw_version,
         }
 
     @property
@@ -61,11 +63,12 @@ class SensorEntityBase(SensorEntity):
     async def async_will_remove_from_hass(self):
         self._device.remove_callback(self._observe, self.async_write_ha_state)
 
+
 class Emu2ActivePowerSensor(SensorEntityBase):
     should_poll = False
-    
+
     def __init__(self, device):
-        super().__init__(device, 'InstantaneousDemand')
+        super().__init__(device, "InstantaneousDemand")
 
         self._attr_unique_id = f"{self._device.device_id}_power"
         self._attr_name = f"{self._device.device_name} Power"
@@ -78,16 +81,19 @@ class Emu2ActivePowerSensor(SensorEntityBase):
     def state(self):
         return self._device.power
 
+
 class Emu2CurrentPriceSensor(SensorEntityBase):
     def __init__(self, device):
-        super().__init__(device, 'PriceCluster')        
+        super().__init__(device, "PriceCluster")
 
         self._attr_unique_id = f"{self._device.device_id}_current_price"
         self._attr_name = f"{self._device.device_name} Current Price"
 
         self._attr_device_class = SensorDeviceClass.MONETARY
         self._attr_state_class = SensorStateClass.MEASUREMENT
-        self._attr_native_unit_of_measurement = f"{CURRENCY_DOLLAR}/{ENERGY_KILO_WATT_HOUR}"
+        self._attr_native_unit_of_measurement = (
+            f"{CURRENCY_DOLLAR}/{ENERGY_KILO_WATT_HOUR}"
+        )
 
     async def async_update(self):
         await self._device._emu2.get_current_price()
@@ -96,9 +102,10 @@ class Emu2CurrentPriceSensor(SensorEntityBase):
     def state(self):
         return self._device.current_price
 
+
 class Emu2CurrentPeriodUsageSensor(SensorEntityBase):
     def __init__(self, device):
-        super().__init__(device, 'CurrentPeriodUsage')        
+        super().__init__(device, "CurrentPeriodUsage")
 
         self._attr_unique_id = f"{self._device.device_id}_current_period_usage"
         self._attr_name = f"{self._device.device_name} Current Period Usage"
@@ -117,12 +124,13 @@ class Emu2CurrentPeriodUsageSensor(SensorEntityBase):
     @property
     def last_reset(self):
         return self._device.current_usage_start_date
-    
+
+
 class Emu2SummationDeliveredSensor(SensorEntityBase):
     should_poll = False
 
     def __init__(self, device):
-        super().__init__(device, 'CurrentSummationDelivered')        
+        super().__init__(device, "CurrentSummationDelivered")
 
         self._attr_unique_id = f"{self._device.device_id}_summation_delivered"
         self._attr_name = f"{self._device.device_name} Summation Delivered"
@@ -135,13 +143,15 @@ class Emu2SummationDeliveredSensor(SensorEntityBase):
     def state(self):
         return self._device.summation_delivered
 
+
 class Emu2SummationReceivedSensor(SensorEntityBase):
     should_poll = False
 
     def __init__(self, device):
-        super().__init__(device, 'CurrentSummationReceived')        
+        # The received information is part of the Summation Delivered XML packet
+        super().__init__(device, "CurrentSummationDelivered")
 
-        self._attr_unique_id = f"{self._device.device_id}_summation_recieved"
+        self._attr_unique_id = f"{self._device.device_id}_summation_received"
         self._attr_name = f"{self._device.device_name} Summation Received"
 
         self._attr_device_class = SensorDeviceClass.ENERGY

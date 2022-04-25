@@ -70,11 +70,9 @@ class Emu2:
             )
         except SerialException as ex:
             _LOGGER.error(ex)
-            self._connected = False
-        else:
-            self._connected = True
-        
-        return self._connected
+            return False
+
+        return True
 
     async def serial_read(self):
         _LOGGER.info("Starting serial_read loop")
@@ -97,6 +95,7 @@ class Emu2:
             response += line
             if line.startswith('</'):
                 try:
+                    self._connected = True
                     self._process_reply(response)
                     response = ''
                 except Exception as ex:

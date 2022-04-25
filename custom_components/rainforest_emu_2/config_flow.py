@@ -119,7 +119,8 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
             return None
 
         serial_loop_task = self.hass.loop.create_task(emu2.serial_read())
-        await emu2.wait_connected(5)
+        if await emu2.wait_connected(8) == False:
+            _LOGGER.debug("Failed to receive data from device")
 
         await emu2.get_device_info()
 

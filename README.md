@@ -21,9 +21,10 @@ Integrate the [Rainforest EMU-2](https://www.rainforestautomation.com/rfa-z105-2
 
 1. Select ```Configure | Dashboards | Energy``` to enter configuration mode
 1. Choose ```ADD CONSUMPTION```
-1. For ```Consumed Energy (kWh)``` select the Rainforest ```Current Perdiod Usage``` sensor
+1. For ```Consumed Energy (kWh)``` select the Rainforest ```Summation Delivered``` sensor
 1. Under cost, select the entity option and choose the Rainforest ```Current Price``` sensor
     > This option depends on the device containing the pricing information. Chose one of the other options if the device is not loaded with pricing information.
+1. If you have solar, then repeat steps 2-4 for the ```Summation Received``` sensor
 1. Select ```SAVE```
 
 # Result
