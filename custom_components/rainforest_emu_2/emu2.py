@@ -139,7 +139,7 @@ class Emu2:
             wrapped = itertools.chain('<Root>', xml_str, '</Root>')
             root = ElementTree.fromstringlist(wrapped)
         except ElementTree.ParseError:
-            _LOGGER.error("Malformed XML: %s", xml_str)
+            _LOGGER.debug("Malformed XML: %s", xml_str)
             return
 
         for tree in root:
