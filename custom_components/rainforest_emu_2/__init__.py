@@ -68,12 +68,10 @@ class RainforestEmu2Device:
         self._callbacks = set()
 
         self._power = None
-        
+       
         self._summation_delivered = None
         self._summation_received = None
-
         self._current_price = None
-
         self._current_usage = None
         self._current_usage_start_date = dt.utc_from_timestamp(0)
 
@@ -133,19 +131,19 @@ class RainforestEmu2Device:
 
     @property
     def device_manufacturer(self) -> str:
-        return self._properties[ATTR_MANUFACTURER]
+        self._properties.get(ATTR_MANUFACTURER)
 
     @property
     def device_model(self) -> str:
-        return self._properties[ATTR_MODEL]
+        self._properties.get(ATTR_MODEL)
 
     @property
     def device_sw_version(self) -> str:
-        return self._properties[ATTR_SW_VERSION]
+        self._properties.get(ATTR_SW_VERSION)
 
     @property
     def device_hw_version(self) -> str:
-        return self._properties[ATTR_HW_VERSION]
+        self._properties.get(ATTR_HW_VERSION)
 
     @property
     def power(self) -> float:
