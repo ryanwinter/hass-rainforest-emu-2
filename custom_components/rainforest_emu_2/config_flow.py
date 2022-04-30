@@ -25,7 +25,8 @@ from .const import (
 )
 from .emu2 import Emu2
 from .emu2_entities import (
-    DeviceInfo
+    DeviceInfo,
+    InstantaneousDemand
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -63,15 +64,9 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
                 usb.get_serial_by_id, port.device
             )
 
-            device_properties = await self.get_device_properties(device_path)
+            device_properties = await self.async_get_device_properties(device_path)
             if device_properties is not None:
-                await self.async_set_unique_id(device_properties[ATTR_DEVICE_MAC_ID])
-                self._abort_if_unique_id_configured()
-
-                return self.async_create_entry(
-                    title = device_path,
-                    data = device_properties
-                )
+                return await self.async_setup_device(device_path, device_properties)
 
             _LOGGER.info("EMU-2 device not detected on %s", device_path)
             errors[CONF_DEVICE_PATH] = "not_detected"
@@ -83,7 +78,6 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
         )
         return self.async_show_form(step_id="user", data_schema = schema, errors = errors)
 
-
     async def async_step_manual(self, user_input = None):
         """Manually specify the path."""
         errors = {}
@@ -91,15 +85,9 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
         if user_input is not None:
             device_path = user_input[CONF_DEVICE_PATH]
 
-            device_properties = await self.get_device_properties(device_path)
+            device_properties = await self.async_get_device_properties(device_path)
             if device_properties is not None:
-                await self.async_set_unique_id(device_properties[ATTR_DEVICE_MAC_ID])
-                self._abort_if_unique_id_configured()
-
-                return self.async_create_entry(
-                    title = device_path,
-                    data = device_properties
-                )
+                return await self.async_setup_device(device_path, device_properties)
 
             errors[CONF_DEVICE_PATH] = "not_detected"
 
@@ -110,7 +98,16 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
         )
         return self.async_show_form(step_id = "manual", data_schema = schema, errors = errors)
 
-    async def get_device_properties(self, device_path: str) -> dict[str, str]:
+    async def async_setup_device(self, device_path: str, device_properties: dict):
+        await self.async_set_unique_id(device_properties[ATTR_DEVICE_MAC_ID])
+        self._abort_if_unique_id_configured()
+
+        return self.async_create_entry(
+            title = device_path,
+            data = device_properties
+        )        
+
+    async def async_get_device_properties(self, device_path: str) -> dict[str, str]:
         """Probe the the device for the its properties."""
 
         emu2 = Emu2(device_path)
@@ -135,16 +132,24 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
         await emu2.close()
 
         response = emu2.get_data(DeviceInfo)
+        if response is not None:
+            return {
+                ATTR_DEVICE_PATH: device_path,
+                ATTR_DEVICE_MAC_ID: response.device_mac,
+                ATTR_SW_VERSION: response.fw_version,
+                ATTR_HW_VERSION: response.hw_version,
+                ATTR_MANUFACTURER: response.manufacturer,
+                ATTR_MODEL: response.model_id
+            }
+        _LOGGER.debug("get_devices_properties DeviceInfo response is None")
 
-        if response is None:
-            _LOGGER.debug("get_devices_properties response is None")
-            return None
+        # For some reason we didnt get a DeviceInfo response, failback to an InstananeousDemand response
+        response = emu2.get_data(InstantaneousDemand)
+        if response is not None:
+            return {
+                ATTR_DEVICE_PATH: device_path,
+                ATTR_DEVICE_MAC_ID: response.device_mac,
+            }
 
-        return {
-            ATTR_DEVICE_PATH: device_path,
-            ATTR_DEVICE_MAC_ID: response.device_mac,
-            ATTR_SW_VERSION: response.fw_version,
-            ATTR_HW_VERSION: response.hw_version,
-            ATTR_MANUFACTURER: response.manufacturer,
-            ATTR_MODEL: response.model_id
-        }
+        _LOGGER.debug("get_devices_properties InstantaneousDemand response is None")
+        return None
