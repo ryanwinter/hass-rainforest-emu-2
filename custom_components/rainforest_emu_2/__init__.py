@@ -15,7 +15,9 @@ from homeassistant.const import (
     ATTR_MANUFACTURER,
     ATTR_MODEL,
     ATTR_HW_VERSION,
-    ATTR_SW_VERSION
+    ATTR_SW_VERSION,
+    CONF_HOST,
+    CONF_PORT
 )
 
 from .emu2 import Emu2
@@ -74,8 +76,8 @@ class RainforestEmu2Device:
         self._current_price = None
         self._current_usage = None
         self._current_usage_start_date = dt.utc_from_timestamp(0)
-
-        self._emu2 = Emu2(properties[ATTR_DEVICE_PATH])
+  
+        self._emu2 = Emu2(properties[ATTR_DEVICE_PATH], properties[CONF_HOST], properties[CONF_PORT])
         self._emu2.register_process_callback(self._process_update)
 
         self._serial_loop_task = self._hass.loop.create_task(self._emu2.serial_read())
