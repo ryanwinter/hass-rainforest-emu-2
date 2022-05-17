@@ -12,7 +12,9 @@
             },
             "manual": {
                 "data": {
-                    "device_path": "Device path"
+                    "device_path": "Device path, or leave blank for TCP connection",
+					"host": "IP Address or Domain name of the USB>TCP converter",
+					"port": "TCP port on the USB>TCP converter"
                 },
                 "description": "Set up the Rainforest EMU-2 device integration"
             }

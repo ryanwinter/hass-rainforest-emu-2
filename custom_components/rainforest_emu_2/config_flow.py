@@ -15,7 +15,9 @@ from homeassistant.const import (
     ATTR_SW_VERSION,
     ATTR_HW_VERSION,
     ATTR_MANUFACTURER,
-    ATTR_MODEL
+    ATTR_MODEL,
+    CONF_HOST,
+    CONF_PORT
 )
 
 from .const import (
@@ -83,17 +85,25 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
         errors = {}
 
         if user_input is not None:
-            device_path = user_input[CONF_DEVICE_PATH]
-
-            device_properties = await self.async_get_device_properties(device_path)
+            device_path = None
+            host = None
+            port = None
+            try:
+                device_path = user_input[CONF_DEVICE_PATH]
+            except Exception as ex:
+                host = user_input[CONF_HOST]
+                port = user_input[CONF_PORT]
+            
+            device_properties = await self.async_get_device_properties(device_path, host, port)
             if device_properties is not None:
                 return await self.async_setup_device(device_path, device_properties)
-
             errors[CONF_DEVICE_PATH] = "not_detected"
 
         schema = vol.Schema(
             {
-                vol.Required(CONF_DEVICE_PATH): str
+                vol.Optional(CONF_DEVICE_PATH): str,
+                vol.Optional(CONF_HOST): str,
+                vol.Optional(CONF_PORT): str             
             }
         )
         return self.async_show_form(step_id = "manual", data_schema = schema, errors = errors)
@@ -107,10 +117,10 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
             data = device_properties
         )        
 
-    async def async_get_device_properties(self, device_path: str) -> dict[str, str]:
+    async def async_get_device_properties(self, device_path, host, port) -> dict[str, str]:
         """Probe the the device for the its properties."""
 
-        emu2 = Emu2(device_path)
+        emu2 = Emu2(device_path, host, port)
 
         if await emu2.test_available() == False:
             return None
@@ -139,7 +149,9 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
                 ATTR_SW_VERSION: response.fw_version,
                 ATTR_HW_VERSION: response.hw_version,
                 ATTR_MANUFACTURER: response.manufacturer,
-                ATTR_MODEL: response.model_id
+                ATTR_MODEL: response.model_id,
+                CONF_HOST: host,
+                CONF_PORT: port
             }
         _LOGGER.debug("get_devices_properties DeviceInfo response is None")
 

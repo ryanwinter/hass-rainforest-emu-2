@@ -15,7 +15,7 @@ Integrate the [Rainforest EMU-2](https://www.rainforestautomation.com/rfa-z105-2
 
 1. Install [HACS](https://hacs.xyz)
 1. Through the HACS integration, search for and install "Rainforest EMU-2"
-1. Choose from one of the detected serial ports
+1. Choose from one of the detected serial ports, or enter a host name and TCP port number when using a USB>TCP adapter to remotely locate your EMU-2 device
 
 # Configuration
 

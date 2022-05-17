@@ -13,7 +13,9 @@ class Emu2:
 
     def __init__(
         self, 
-        device
+        device,
+        host,
+        port
     ):
         self._device = device
         self._connected = False
@@ -21,7 +23,8 @@ class Emu2:
         self._writer = None
         self._reader = None
         self._writer_lock = asyncio.Lock()
-
+        self._host = host
+        self._port = port
         self._data = {}
 
     def get_data(self, klass):
@@ -62,15 +65,23 @@ class Emu2:
     async def open(self) -> bool:
         if self._connected == True:
             return True
-
-        try:
-            self._reader, self._writer = await serial_asyncio.open_serial_connection(
-                url = self._device,
-                baudrate = 115200
-            )
-        except SerialException as ex:
-            _LOGGER.error(ex)
-            return False
+        if self._host:
+            try:
+                    self._reader, self._writer = await asyncio.open_connection(
+                        self._host, self._port
+                    )
+            except Exception as ex:
+                _LOGGER.error(ex)
+                return False           
+        else:
+            try:
+                    self._reader, self._writer = await serial_asyncio.open_serial_connection(
+                        url = self._device,
+                        baudrate = 115200
+                    )
+            except SerialException as ex:
+                _LOGGER.error(ex)
+                return False
 
         return True
 
@@ -84,13 +95,13 @@ class Emu2:
         while True:
             try:
                 line = await self._reader.readline()
-            except SerialException as ex:
+            except Exception as ex:
                 _LOGGER.error(ex)
                 self._connected = False
                 break
             
             line = line.decode("utf-8").strip()
-            _LOGGER.debug("received %s", line)
+            _LOGGER.debug("received %d: %s", len(line), line)
 
             response += line
             if line.startswith('</'):
