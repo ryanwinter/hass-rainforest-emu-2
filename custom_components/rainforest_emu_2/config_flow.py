@@ -66,7 +66,7 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
                 usb.get_serial_by_id, port.device
             )
 
-            device_properties = await self.async_get_device_properties(device_path)
+            device_properties = await self.async_get_device_properties(device_path, None, None)
             if device_properties is not None:
                 return await self.async_setup_device(device_path, device_properties)
 
@@ -161,6 +161,8 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
             return {
                 ATTR_DEVICE_PATH: device_path,
                 ATTR_DEVICE_MAC_ID: response.device_mac,
+                CONF_HOST: host,
+                CONF_PORT: port
             }
 
         _LOGGER.debug("get_devices_properties InstantaneousDemand response is None")
