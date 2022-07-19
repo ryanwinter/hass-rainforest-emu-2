@@ -44,11 +44,13 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
     async def async_step_user(self, user_input = None):
         """Handle the initial step."""
         ports = await self.hass.async_add_executor_job(serial.tools.list_ports.comports)
-        list_of_ports = [
-            f"{p}"
-            + (f" - {p.manufacturer}" if p.manufacturer else "")
-            for p in ports
-        ]
+
+        list_of_ports = []
+        for p in ports:
+            port_name = f"{p}"
+            if p.manufacturer:
+                port_name += f" - {p.manufacturer}"
+            list_of_ports.append(port_name)
 
         if not list_of_ports:
             return await self.async_step_manual()

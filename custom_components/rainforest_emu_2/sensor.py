@@ -21,6 +21,8 @@ from homeassistant.const import (
 
 from .const import DOMAIN, DEVICE_NAME
 
+# Only allow a single update at a time as they all go through the same serial interface
+PARALLEL_UPDATES = 1
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     device = hass.data[DOMAIN][config_entry.entry_id]
