@@ -1,5 +1,5 @@
 {
   "name": "Rainforest EMU-2",
   "homeassistant": "2021.8.0",
-  "render_readme": "true"
+  "render_readme": true
 }
