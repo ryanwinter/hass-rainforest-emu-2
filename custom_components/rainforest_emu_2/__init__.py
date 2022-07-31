@@ -76,7 +76,7 @@ class RainforestEmu2Device:
         self._current_price = None
         self._current_usage = None
         self._current_usage_start_date = dt.utc_from_timestamp(0)
-  
+
         self._emu2 = Emu2(properties[ATTR_DEVICE_PATH], properties[CONF_HOST], properties[CONF_PORT])
         self._emu2.register_process_callback(self._process_update)
 
@@ -101,6 +101,7 @@ class RainforestEmu2Device:
         self._callbacks.discard((type, callback))
 
     def _process_update(self, type, response) -> None:
+    
         if type == 'InstantaneousDemand':
             self._power = response.reading
 
@@ -114,7 +115,7 @@ class RainforestEmu2Device:
         elif type == 'CurrentSummationDelivered':
             self._summation_delivered = response.delivered
             self._summation_received = response.received
-
+        
         for callback in self._callbacks:
             if (callback[0] == type):
                 callback[1]()
@@ -133,19 +134,19 @@ class RainforestEmu2Device:
 
     @property
     def device_manufacturer(self) -> str:
-        self._properties.get(ATTR_MANUFACTURER)
+        return self._properties.get(ATTR_MANUFACTURER)
 
     @property
     def device_model(self) -> str:
-        self._properties.get(ATTR_MODEL)
+        return self._properties.get(ATTR_MODEL)
 
     @property
     def device_sw_version(self) -> str:
-        self._properties.get(ATTR_SW_VERSION)
+        return self._properties.get(ATTR_SW_VERSION)
 
     @property
     def device_hw_version(self) -> str:
-        self._properties.get(ATTR_HW_VERSION)
+        return self._properties.get(ATTR_HW_VERSION)
 
     @property
     def power(self) -> float:

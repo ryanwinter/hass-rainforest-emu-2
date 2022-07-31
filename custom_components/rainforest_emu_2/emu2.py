@@ -4,6 +4,7 @@ import itertools
 import logging
 from xml.etree import ElementTree
 from serial import SerialException
+from collections import defaultdict
 
 from . import emu2_entities
 
@@ -26,6 +27,7 @@ class Emu2:
         self._host = host
         self._port = port
         self._data = {}
+        self._initialized = False
 
     def get_data(self, klass):
         _LOGGER.debug("Requesting data %s", klass)
@@ -101,13 +103,35 @@ class Emu2:
                 break
             
             line = line.decode("utf-8").strip()
+            
+            if "Port already in use" in line:
+                _LOGGER.error("Another client is already connected to the TCP server, disconnect that client and try again.")
+            if len(line) == 0:
+                self._connected = False
+                _LOGGER.error("No Data Received, Disconnecting")
+                await asyncio.sleep(10)
+                await self.open()
+                response = ""
+                               
             _LOGGER.debug("received %d: %s", len(line), line)
-
+              
             response += line
             if line.startswith('</'):
                 try:
-                    self._connected = True
                     self._process_reply(response)
+                    #Upon first recieved message, get the basic data
+                    if not self._connected:
+                        self._connected = True
+                        self._initialized = False
+                        await self.get_device_info()  
+                        await self.get_connection_status()
+                        #await self.get_network_info()
+                        #await self.get_meter_list()
+                    elif not self._initialized:
+                        self._initialized = True
+                        #await self.get_schedule()
+                        #await self.get_meter_info()
+                        await self.set_schedule(None, "demand",  9, True)
                     response = ''
                 except Exception as ex:
                     _LOGGER.error("something went wrong: %s", ex)
@@ -115,7 +139,7 @@ class Emu2:
 
     async def issue_command(self, command, params = None) -> bool:
         if self._connected == False:
-            _LOGGER.error("issued command while not connected")
+            _LOGGER.error("issued command while not connected: " + command)
             return False
 
         root = ElementTree.Element('Command')
@@ -189,6 +213,7 @@ class Emu2:
         if event not in enum:
             raise ValueError('Invalid event specified')
 
+        
     # The following are convenience methods for sending commands. Commands
     # can also be sent manually using the generic issue_command method.
 
