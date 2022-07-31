@@ -1,6 +1,6 @@
 """Support for Rainforest EMU-2."""
 from __future__ import annotations
-
+import logging
 from homeassistant.core import callback
 from homeassistant.components.sensor import (
     SensorEntity,
@@ -21,6 +21,9 @@ from homeassistant.const import (
 
 from .const import DOMAIN, DEVICE_NAME
 
+_LOGGER = logging.getLogger(__name__)
+
+
 # Only allow a single update at a time as they all go through the same serial interface
 PARALLEL_UPDATES = 1
 
@@ -33,6 +36,10 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         Emu2CurrentPeriodUsageSensor(device),
         Emu2SummationDeliveredSensor(device),
         Emu2SummationReceivedSensor(device),
+        Emu2GenericSensor(device, "get_connection_status", "Connection Status", "ConnectionStatus", "Status", ),
+        Emu2GenericSensor(device, None, "Connection Link Strength", "ConnectionStatus", "LinkStrength"),
+        Emu2GenericSensor(device, None, "Connection Status Description", "ConnectionStatus", "Description"),
+        Emu2GenericSensor(device, None, "Connection Channel", "ConnectionStatus", "Channel"),
     ]
     async_add_entities(entities)
 
@@ -65,6 +72,37 @@ class SensorEntityBase(SensorEntity):
     async def async_will_remove_from_hass(self):
         self._device.remove_callback(self._observe, self.async_write_ha_state)
 
+class Emu2GenericSensor(SensorEntityBase):
+    should_poll = False
+
+    def __init__(self, device, command,  name, message, key):
+        super().__init__(device, message)
+
+        self._attr_unique_id = f"{self._device.device_id}_" + message + "_" + key
+        self._attr_name = f"{self._device.device_name} " + name
+        self._message = message
+        self._key = key
+        
+        self._command = command
+        if command is not None:
+            self.should_poll = True
+        
+        #self._attr_device_class = SensorDeviceClass.POWER
+        #self._attr_state_class = SensorStateClass.MEASUREMENT
+        #self._attr_native_unit_of_measurement = POWER_KILO_WATT
+
+    async def async_update(self):
+        await self._device._emu2.issue_command(self._command)
+
+    @property
+    def state(self):
+        try:
+            data = self._device._emu2._data[self._message]
+            if data is None:
+                return None
+            return   data.find_text(self._key)
+        except Exception as ex:
+            return None
 
 class Emu2ActivePowerSensor(SensorEntityBase):
     should_poll = False

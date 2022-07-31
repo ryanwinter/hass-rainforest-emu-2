@@ -133,7 +133,7 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
 
         await emu2.get_device_info()
 
-        await asyncio.sleep(2)
+        await asyncio.sleep(15)
         serial_loop_task.cancel()
 
         try:
@@ -144,6 +144,7 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
         await emu2.close()
 
         response = emu2.get_data(DeviceInfo)
+        
         if response is not None:
             return {
                 ATTR_DEVICE_PATH: device_path,
@@ -156,16 +157,5 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
                 CONF_PORT: port
             }
         _LOGGER.debug("get_devices_properties DeviceInfo response is None")
-
-        # For some reason we didnt get a DeviceInfo response, failback to an InstananeousDemand response
-        response = emu2.get_data(InstantaneousDemand)
-        if response is not None:
-            return {
-                ATTR_DEVICE_PATH: device_path,
-                ATTR_DEVICE_MAC_ID: response.device_mac,
-                CONF_HOST: host,
-                CONF_PORT: port
-            }
-
-        _LOGGER.debug("get_devices_properties InstantaneousDemand response is None")
+      
         return None
