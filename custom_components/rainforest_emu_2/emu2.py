@@ -101,6 +101,17 @@ class Emu2:
                 break
             
             line = line.decode("utf-8").strip()
+             
+            if "Port already in use" in line:
+                _LOGGER.error("Another client is already connected to the TCP server, disconnect that client and try again.")
+            if len(line) == 0:
+                self._connected = False
+                _LOGGER.error("No Data Received, Disconnecting")
+                await asyncio.sleep(10)
+                await self.open()
+                response = ""
+                               
+            
             _LOGGER.debug("received %d: %s", len(line), line)
 
             response += line
