@@ -133,7 +133,7 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
 
         await emu2.get_device_info()
 
-        await asyncio.sleep(2)
+        await asyncio.sleep(3)
         serial_loop_task.cancel()
 
         try:
@@ -157,7 +157,7 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
             }
         _LOGGER.debug("get_devices_properties DeviceInfo response is None")
 
-        # For some reason we didnt get a DeviceInfo response, failback to an InstananeousDemand response
+        # For some reason we didnt get a DeviceInfo response, fallback to InstantaneousDemand response
         response = emu2.get_data(InstantaneousDemand)
         if response is not None:
             return {
