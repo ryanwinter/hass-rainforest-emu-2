@@ -77,7 +77,7 @@ class RainforestEmu2Device:
         self._current_usage = None
         self._current_usage_start_date = dt.utc_from_timestamp(0)
   
-        self._emu2 = Emu2(properties[ATTR_DEVICE_PATH], properties[CONF_HOST], properties[CONF_PORT])
+        self._emu2 = Emu2(properties.get(ATTR_DEVICE_PATH, ""), properties.get(CONF_HOST, ""), properties.get(CONF_PORT, 0))        
         self._emu2.register_process_callback(self._process_update)
 
         self._serial_loop_task = self._hass.loop.create_task(self._emu2.serial_read())
