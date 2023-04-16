@@ -6,10 +6,10 @@
   "dependencies": ["usb"],
   "codeowners": ["@ryanwinter"],
   "requirements": [
-    "pyserial-asyncio==0.6"
+    "aioserial==1.3.1"
   ],
   "iot_class": "local_polling",
-  "version": "1.3.2",
+  "version": "1.3.0",
   "config_flow": true,
   "usb": [
     {

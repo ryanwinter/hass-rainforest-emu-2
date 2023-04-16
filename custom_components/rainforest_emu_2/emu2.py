@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import asyncio
-import serial_asyncio
+#import serial_asyncio
+import aioserial
 import itertools
 import logging
 from xml.etree import ElementTree
 from serial import SerialException
 
-from . import emu2_entities
+from .. import emu2_entities
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -13,18 +16,16 @@ class Emu2:
 
     def __init__(
         self, 
-        device,
-        host,
-        port
+        device
     ):
         self._device = device
-        self._connected = False
+#        self._connected = False
         self._callback = None
-        self._writer = None
-        self._reader = None
-        self._writer_lock = asyncio.Lock()
-        self._host = host
-        self._port = port
+#        self._writer = None
+#        self._reader = None
+#        self._writer_lock = asyncio.Lock()
+        self._serial = None
+
         self._data = {}
 
     def get_data(self, klass):
@@ -34,54 +35,58 @@ class Emu2:
     def register_process_callback(self, callback):
         self._callback = callback
 
-    def connected(self) -> bool:
-        return self._connected
+#    def connected(self) -> bool:
+#        return self._connected
 
-    async def test_available(self) -> bool:
-        if await self.open() == False:
-            return False
+    # async def test_available(self) -> bool:
+    #     if await self.open() == False:
+    #         return False
 
-        await self.close()
-        return True
+    #     await self.close()
+    #     return True
 
-    async def wait_connected(self, timeout) -> bool:
-        count = 0
-        while self._connected == False:
-            await asyncio.sleep(1)
+    # async def wait_connected(self, timeout) -> bool:
+    #     count = 0
+    #     while self._connected == False:
+    #         await asyncio.sleep(1)
 
-            count += 1
-            if (count > timeout):
-                return False
+    #         count += 1
+    #         if (count > timeout):
+    #             return False
 
-        return True
+    #     return True
+
+    # async def isOpen(self) -> bool:
+    #     return self._serial.isOpen()
 
     async def close(self) -> None:
-        if self._writer is not None:
-            self._writer.close()
-            await self._writer.wait_closed()
-        
-        self._connected = False
+#        if self._writer is not None:
+#            self._writer.close()
+#            await self._writer.wait_closed()
+
+        self._serial.close()
+
+#        self._connected = False
 
     async def open(self) -> bool:
-        if self._connected == True:
+#        if self._connected == True:
+#            return True
+
+        if self._serial.IsOpen == True:
             return True
-        if self._host:
-            try:
-                    self._reader, self._writer = await asyncio.open_connection(
-                        self._host, self._port
-                    )
-            except Exception as ex:
-                _LOGGER.error(ex)
-                return False           
-        else:
-            try:
-                    self._reader, self._writer = await serial_asyncio.open_serial_connection(
-                        url = self._device,
-                        baudrate = 115200
-                    )
-            except SerialException as ex:
-                _LOGGER.error(ex)
-                return False
+
+        try:
+            self._serial = await AioSerial(
+                port = self._device,
+                baudrate = 115200
+            )
+#            self._reader, self._writer = await serial_asyncio.open_serial_connection(
+#                url = self._device,
+#                baudrate = 115200
+#            )
+        except SerialException as ex:
+            _LOGGER.error(ex)
+            return False
 
         return True
 
@@ -89,33 +94,38 @@ class Emu2:
         _LOGGER.info("Starting serial_read loop")
 
         if await self.open() == False:
-            return
+            await asyncio.sleep(5)
 
         response = ''
         while True:
             try:
-                line = await self._reader.readline()
-            except Exception as ex:
+#                line = await self._reader.readline()
+                line = await self._serial.readline_async()
+            except SerialException as ex:
                 _LOGGER.error(ex)
-                self._connected = False
+#                self._connected = False
                 break
-            
-            line = line.decode("utf-8").strip()
-            _LOGGER.debug("received %d: %s", len(line), line)
+            else:
+                line = line.decode("utf-8").strip()
+                _LOGGER.debug("received %d: %s", len(line), line)
 
-            response += line
-            if line.startswith('</'):
-                try:
-                    self._connected = True
-                    self._process_reply(response)
-                    response = ''
-                except Exception as ex:
-                    _LOGGER.error("something went wrong: %s", ex)
+                response += line
+
+                if line.startswith('</'):
+                    try:
+#                        self._connected = True
+                        self._process_reply(response)
+                        response = ''
+                    except Exception as ex:
+                        _LOGGER.error("something went wrong: %s", ex)
 
 
     async def issue_command(self, command, params = None) -> bool:
-        if self._connected == False:
-            _LOGGER.error("issued command while not connected")
+#        if self._connected == False:
+#            _LOGGER.error("issued command while not connected")
+#            return False
+
+        if self._serial.isOpen() == False:
             return False
 
         root = ElementTree.Element('Command')
@@ -133,12 +143,12 @@ class Emu2:
         _LOGGER.debug("XML write %s", bin_string)
 
         try:
-            async with self._writer_lock:
-                self._writer.write(bin_string)
-                await self._writer.drain()
-                # Throttle time between writes
-                await asyncio.sleep(1)
-
+            # async with self._writer_lock:
+            #     self._writer.write(bin_string)
+            #     await self._writer.drain()
+            #     # Throttle time between writes
+            #     await asyncio.sleep(1)
+            await self._serial.write_async(bin_string)
         except SerialException as ex:
             _LOGGER.error(ex)
             return False
