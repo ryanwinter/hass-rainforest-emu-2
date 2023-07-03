@@ -115,7 +115,7 @@ class RainforestConfigFlow(config_entries.ConfigFlow, domain = DOMAIN):
         self._abort_if_unique_id_configured()
 
         return self.async_create_entry(
-            title = device_path,
+            title = device_path or f"{device_properties[CONF_HOST]}:{device_properties[CONF_PORT]}",
             data = device_properties
         )        
 
