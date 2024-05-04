@@ -14,8 +14,8 @@ from homeassistant.const import (
     ATTR_MODEL,
     ATTR_HW_VERSION,
     ATTR_SW_VERSION,
-    ENERGY_KILO_WATT_HOUR,
-    POWER_KILO_WATT,
+    UnitOfEnergy.KILO_WATT_HOUR,
+    UnitOfPower.KILO_WATT,
     CURRENCY_DOLLAR,
 )
 
@@ -77,7 +77,7 @@ class Emu2ActivePowerSensor(SensorEntityBase):
 
         self._attr_device_class = SensorDeviceClass.POWER
         self._attr_state_class = SensorStateClass.MEASUREMENT
-        self._attr_native_unit_of_measurement = POWER_KILO_WATT
+        self._attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
 
     @property
     def state(self):
@@ -94,7 +94,7 @@ class Emu2CurrentPriceSensor(SensorEntityBase):
         self._attr_device_class = SensorDeviceClass.MONETARY
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = (
-            f"{CURRENCY_DOLLAR}/{ENERGY_KILO_WATT_HOUR}"
+            f"{CURRENCY_DOLLAR}/{UnitOfEnergy.KILO_WATT_HOUR}"
         )
 
     async def async_update(self):
@@ -114,7 +114,7 @@ class Emu2CurrentPeriodUsageSensor(SensorEntityBase):
 
         self._attr_device_class = SensorDeviceClass.ENERGY
         self._attr_state_class = SensorStateClass.TOTAL
-        self._attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
+        self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
 
     async def async_update(self):
         await self._device._emu2.get_current_period_usage()
@@ -139,7 +139,7 @@ class Emu2SummationDeliveredSensor(SensorEntityBase):
 
         self._attr_device_class = SensorDeviceClass.ENERGY
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
-        self._attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
+        self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
 
     @property
     def state(self):
@@ -158,7 +158,7 @@ class Emu2SummationReceivedSensor(SensorEntityBase):
 
         self._attr_device_class = SensorDeviceClass.ENERGY
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
-        self._attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
+        self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
 
     @property
     def state(self):
