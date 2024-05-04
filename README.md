@@ -9,6 +9,9 @@
 
 # Rainforest EMU-2
 
+> [!CAUTION]
+> This device is now available via the [Rainfoest RAVEn](https://www.home-assistant.io/integrations/rainforest_raven) integration in Home Assistant.
+
 Integrate the [Rainforest EMU-2](https://www.rainforestautomation.com/rfa-z105-2-emu-2-2) into the Home Assistant Energy Dashboard.
 
 # Installation
